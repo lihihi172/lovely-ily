@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#ffe5ec">
+  <meta name="description" content="Gửi Hồng Phúc — một chút tình iu em dành cho anh.">
+  <title>Gửi Hồng Phúc ❤️</title>
+
+  <!-- Comfortaa webfont with full Vietnamese support. -->
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --c1:#ffe5ec;
+      --c2:#ffc2d1;
+      --c3:#ffb3c6;
+      --c4:#ff8fab;
+      --c5:#fb6f92;
+      --ink:#55363f;
+      --muted:#8a606c;
+      --paper:#fffdfd;
+      --white:#ffffff;
+      --shadow:0 24px 70px rgba(185,72,103,.16);
+      --soft-shadow:0 12px 34px rgba(185,72,103,.13);
+      --radius:28px;
+      --ease:cubic-bezier(.22,.78,.2,1);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-width:320px;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 10% 8%, rgba(255,255,255,.95), transparent 25%),
+        radial-gradient(circle at 90% 24%, rgba(255,179,198,.24), transparent 26%),
+        radial-gradient(circle at 18% 88%, rgba(255,194,209,.22), transparent 26%),
+        linear-gradient(180deg,#fff3f6 0%,#fffafb 48%,#ffecef 100%);
+      font-family:"Comfortaa",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
+    }
+    body.locked{overflow:hidden}
+    button{font:inherit}
+
+    /* ---------- Opening ---------- */
+    .opening{
+      position:fixed;
+      inset:0;
+      z-index:1000;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 15%,rgba(255,255,255,.98),transparent 31%),
+        radial-gradient(circle at 8% 78%,rgba(255,194,209,.34),transparent 27%),
+        radial-gradient(circle at 92% 62%,rgba(255,143,171,.18),transparent 27%),
+        linear-gradient(155deg,var(--c1),#fffafb 55%,#ffe7ed);
+      transition:opacity .8s var(--ease),visibility .8s;
+    }
+    .opening.hidden{opacity:0;visibility:hidden;pointer-events:none}
+    .opening-inner{
+      position:relative;
+      z-index:2;
+      width:min(100%,430px);
+      text-align:center;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    .opening-kicker{
+      margin:0 0 12px;
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .opening-title{
+      margin:0;
+      max-width:370px;
+      font-size:clamp(22px,6.2vw,31px);
+      line-height:1.35;
+      font-weight:400;
+    }
+    .opening-title span{color:var(--c5)}
+    .envelope-wrap{
+      position:relative;
+      width:min(78vw,310px);
+      aspect-ratio:1.38;
+      margin:28px 0 20px;
+      filter:drop-shadow(0 22px 30px rgba(185,72,103,.17));
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+    }
+    .envelope{
+      position:absolute;
+      inset:0;
+      border-radius:22px;
+      background:linear-gradient(145deg,#ffbfd0,#ff9db7);
+      overflow:hidden;
+      transform:translateZ(0);
+      transition:transform .55s var(--ease);
+    }
+    .envelope-wrap:active .envelope{transform:scale(.975)}
+    .env-back{
+      position:absolute;
+      inset:0;
+      background:linear-gradient(145deg,#ffb4c8,#ff89a9);
+      border-radius:22px;
+    }
+    .env-flap{
+      position:absolute;
+      left:0;
+      top:-2px;
+      width:100%;
+      height:58%;
+      background:linear-gradient(145deg,#ffcddd,#ff9db7);
+      clip-path:polygon(0 0,100% 0,50% 100%);
+      transform-origin:50% 0;
+      transition:transform .75s var(--ease),opacity .5s ease;
+      z-index:4;
+    }
+    .env-letter{
+      position:absolute;
+      left:10%;
+      bottom:8%;
+      width:80%;
+      height:74%;
+      background:#fffdfd;
+      border-radius:14px 14px 10px 10px;
+      box-shadow:0 8px 18px rgba(160,60,88,.12);
+      z-index:2;
+      transition:transform .8s var(--ease);
+    }
+    .env-letter::before{
+      content:"Gửi Hồng Phúc";
+      position:absolute;
+      inset:18% 12% auto;
+      color:var(--c5);
+      font-size:15px;
+    }
+    .env-heart{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-42%);
+      z-index:6;
+      font-size:40px;
+      filter:drop-shadow(0 7px 9px rgba(175,62,92,.18));
+      transition:transform .55s var(--ease),opacity .35s ease;
+    }
+    .envelope-wrap.opened .env-flap{
+      transform:rotateX(180deg);
+      opacity:.18;
+    }
+    .envelope-wrap.opened .env-letter{transform:translateY(-26%)}
+    .envelope-wrap.opened .env-heart{transform:translate(-50%,-42%) scale(.8);opacity:.2}
+    .tap-hint{
+      margin:0;
+      color:var(--c5);
+      font-size:14px;
+      animation:breathe 2.2s ease-in-out infinite;
+    }
+    .opening-note{
+      margin:10px 0 0;
+      max-width:300px;
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.65;
+    }
+    @keyframes breathe{50%{transform:translateY(-3px);opacity:.68}}
+
+    .opening-deco,.float-layer{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+    .opening-deco span{
+      position:absolute;
+      color:rgba(251,111,146,.45);
+      font-size:16px;
+      animation:floatSmall 5s ease-in-out infinite;
+    }
+    .opening-deco span:nth-child(1){left:10%;top:18%;font-size:19px}
+    .opening-deco span:nth-child(2){left:18%;top:72%;font-size:14px;animation-delay:-1.7s}
+    .opening-deco span:nth-child(3){right:12%;top:24%;font-size:18px;animation-delay:-.9s}
+    .opening-deco span:nth-child(4){right:16%;top:73%;font-size:13px;animation-delay:-2.5s}
+    @keyframes floatSmall{50%{transform:translateY(-10px) rotate(8deg);opacity:.75}}
+
+    /* ---------- Music ---------- */
+    .music-toggle{
+      position:fixed;
+      z-index:90;
+      top:max(16px,env(safe-area-inset-top));
+      right:16px;
+      width:46px;
+      height:46px;
+      border:1px solid rgba(251,111,146,.22);
+      border-radius:50%;
+      background:rgba(255,253,253,.88);
+      color:var(--c5);
+      box-shadow:var(--soft-shadow);
+      display:grid;
+      place-items:center;
+      font-size:18px;
+      cursor:pointer;
+      backdrop-filter:blur(12px);
+    }
+    .music-toggle[aria-pressed="false"]{opacity:.78}
+
+    /* ---------- Main ---------- */
+    .main{
+      opacity:0;
+      transform:translateY(18px);
+      transition:opacity 1s ease .15s,transform 1s var(--ease) .15s;
+    }
+    .main.visible{opacity:1;transform:none}
+    .hero{
+      min-height:88svh;
+      display:grid;
+      place-items:center;
+      padding:100px 22px 58px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero-inner{
+      width:min(100%,720px);
+      text-align:center;
+      position:relative;
+      z-index:2;
+    }
+    .eyebrow{
+      margin:0 0 18px;
+      color:var(--c5);
+      font-size:11px;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+    }
+    .hero h1{
+      margin:0;
+      font-size:clamp(35px,10vw,66px);
+      line-height:1.16;
+      font-weight:400;
+      color:var(--ink);
+    }
+    .hero h1 span{color:var(--c5)}
+    .hero-note{
+      width:min(100%,560px);
+      margin:20px auto 0;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.85;
+    }
+    .scroll-cue{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-top:30px;
+      color:var(--c5);
+      font-size:11px;
+      opacity:.8;
+    }
+    .scroll-cue::after{
+      content:"";
+      width:1px;
+      height:28px;
+      background:var(--c4);
+      opacity:.6;
+    }
+
+    .section{
+      width:min(100% - 32px,900px);
+      margin:0 auto;
+      padding:34px 0 86px;
+    }
+    .section-heading{
+      text-align:center;
+      margin-bottom:24px;
+    }
+    .section-kicker{
+      margin:0 0 10px;
+      color:var(--c5);
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .section-title{
+      margin:0 auto;
+      max-width:700px;
+      font-size:clamp(25px,6.7vw,42px);
+      line-height:1.35;
+      font-weight:400;
+      overflow-wrap:anywhere;
+    }
+    .section-subtitle{
+      margin:12px auto 0;
+      max-width:620px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.75;
+    }
+
+    /* ---------- Letter ---------- */
+    .paper{
+      position:relative;
+      background:
+        radial-gradient(circle at 10% 10%,rgba(255,194,209,.16),transparent 22%),
+        linear-gradient(180deg,#fffefe,#fffafa);
+      border:1px solid rgba(251,111,146,.16);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:clamp(28px,7vw,58px) clamp(22px,7vw,68px);
+      overflow:hidden;
+    }
+    .paper::before{
+      content:"";
+      position:absolute;
+      inset:11px;
+      border:1px solid rgba(251,111,146,.10);
+      border-radius:20px;
+      pointer-events:none;
+    }
+    .paper-top{
+      text-align:center;
+      position:relative;
+      z-index:1;
+      margin-bottom:26px;
+    }
+    .paper-label{
+      display:inline-block;
+      padding:7px 12px;
+      border-radius:999px;
+      background:#fff0f4;
+      color:var(--c5);
+      font-size:10px;
+      letter-spacing:.06em;
+    }
+    .letter-title{
+      margin:17px 0 0;
+      font-size:clamp(24px,6.4vw,38px);
+      line-height:1.35;
+      font-weight:400;
+      color:var(--c5);
+    }
+    .letter{
+      position:relative;
+      z-index:1;
+    }
+    .letter p{
+      margin:0 0 19px;
+      font-size:15px;
+      line-height:2;
+      overflow-wrap:anywhere;
+    }
+    .letter .salute{
+      font-size:19px;
+      line-height:1.7;
+      color:var(--c5);
+      margin-bottom:22px;
+    }
+    .letter .english{
+      text-align:center;
+      color:var(--ink);
+      font-size:16px;
+      line-height:1.8;
+      margin:28px 0;
+    }
+    .letter .love-line{
+      color:var(--c5);
+      font-size:18px;
+      line-height:1.8;
+      margin:28px 0 0;
+    }
+    .signature{
+      margin-top:28px;
+      text-align:right;
+      color:var(--c5);
+      font-size:18px;
+    }
+
+    /* ---------- Gallery ---------- */
+    .gallery{
+      display:grid;
+      gap:18px;
+    }
+    .photo{
+      margin:0;
+      position:relative;
+      overflow:hidden;
+      border-radius:24px;
+      background:#fbd9e1;
+      border:1px solid rgba(251,111,146,.13);
+      box-shadow:var(--soft-shadow);
+      cursor:pointer;
+      aspect-ratio:4/3;
+    }
+    .photo.large{aspect-ratio:4/3}
+    .photo img{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit:cover;
+      object-position:center;
+      transition:transform .7s var(--ease);
+    }
+    .photo:active img{transform:scale(1.025)}
+    .photo-caption{
+      position:absolute;
+      left:14px;
+      bottom:14px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,253,253,.83);
+      color:var(--c5);
+      font-size:10px;
+      backdrop-filter:blur(8px);
+    }
+    .gallery-row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      align-items:stretch;
+    }
+    .gallery-row .photo{
+      aspect-ratio:auto;
+      height:auto;
+      align-self:stretch;
+      border-radius:20px;
+    }
+    .gallery-row .photo img{
+      width:100%;
+      height:auto;
+      aspect-ratio:auto;
+      object-fit:contain;
+      display:block;
+    }
+
+    /* ---------- Ending ---------- */
+    .ending{
+      text-align:center;
+      padding:34px 18px 96px;
+    }
+    .ending-card{
+      width:min(100%,720px);
+      margin:0 auto;
+      padding:46px 22px;
+      border-radius:32px;
+      background:linear-gradient(145deg,rgba(255,229,236,.8),rgba(255,255,255,.92));
+      border:1px solid rgba(251,111,146,.14);
+      box-shadow:var(--shadow);
+    }
+    .ending h2{
+      margin:0;
+      color:var(--c5);
+      font-size:clamp(40px,11vw,70px);
+      line-height:1.25;
+      font-weight:400;
+      overflow-wrap:anywhere;
+    }
+    .ending p{
+      width:min(100%,520px);
+      margin:22px auto 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.9;
+    }
+    .from{
+      margin-top:26px;
+      color:var(--ink);
+      font-size:14px;
+    }
+    footer{
+      text-align:center;
+      padding:0 20px max(28px,env(safe-area-inset-bottom));
+      color:rgba(138,96,108,.65);
+      font-size:10px;
+    }
+
+    /* ---------- Floating hearts: only ❤️ 💞 💘 ---------- */
+    .float-heart{
+      position:fixed;
+      left:0;
+      bottom:-48px;
+      z-index:40;
+      pointer-events:none;
+      user-select:none;
+      will-change:transform,opacity;
+      animation:rise var(--duration) linear forwards;
+      filter:drop-shadow(0 7px 10px rgba(185,72,103,.12));
+    }
+    @keyframes rise{
+      0%{transform:translate3d(var(--x),0,0) scale(.72) rotate(0deg);opacity:0}
+      12%{opacity:var(--opacity)}
+      78%{opacity:var(--opacity)}
+      100%{transform:translate3d(calc(var(--x) + var(--drift)), -115svh, 0) scale(1.04) rotate(var(--rotate));opacity:0}
+    }
+
+    /* ---------- Lightbox ---------- */
+    .lightbox{
+      position:fixed;
+      inset:0;
+      z-index:200;
+      display:grid;
+      place-items:center;
+      padding:20px;
+      background:rgba(63,31,40,.78);
+      opacity:0;
+      visibility:hidden;
+      transition:opacity .3s ease,visibility .3s ease;
+      backdrop-filter:blur(8px);
+    }
+    .lightbox.open{opacity:1;visibility:visible}
+    .lightbox img{
+      max-width:min(94vw,900px);
+      max-height:84svh;
+      width:auto;
+      height:auto;
+      border-radius:20px;
+      box-shadow:0 30px 80px rgba(0,0,0,.28);
+      object-fit:contain;
+    }
+    .lightbox-close{
+      position:absolute;
+      top:max(18px,env(safe-area-inset-top));
+      right:18px;
+      width:44px;
+      height:44px;
+      border:0;
+      border-radius:50%;
+      background:rgba(255,255,255,.92);
+      color:var(--c5);
+      font-size:24px;
+      cursor:pointer;
+    }
+
+    /* ---------- Reveal ---------- */
+    .reveal{
+      opacity:0;
+      transform:translateY(24px);
+      transition:opacity .75s ease,transform .75s var(--ease);
+    }
+    .reveal.visible{opacity:1;transform:none}
+
+    @media (min-width:700px){
+      .hero{min-height:82svh}
+      .gallery{gap:22px}
+      .gallery-row{gap:18px; width:100%; margin:0 auto}
+      .photo.large{aspect-ratio:16/10}
+    }
+
+    @media (prefers-reduced-motion:reduce){
+      *,*::before,*::after{
+        scroll-behavior:auto!important;
+        animation-duration:.001ms!important;
+        animation-iteration-count:1!important;
+        transition-duration:.001ms!important;
+      }
+    }
+  </style>
+</head>
+
+<body class="locked">
+  <!-- Opening -->
+  <section class="opening" id="opening" aria-label="Phong thư mở đầu">
+    <div class="opening-deco" aria-hidden="true">
+      <span>❤️</span><span>💞</span><span>💘</span><span>❤️</span>
+    </div>
+
+    <div class="opening-inner">
+      <p class="opening-kicker">Một điều nhỏ em muốn gửi anh</p>
+      <h1 class="opening-title">Gửi Hồng Phúc, người em thương <span>❤️</span></h1>
+
+      <div class="envelope-wrap" id="envelope" role="button" tabindex="0" aria-label="Chạm để mở phong thư">
+        <div class="envelope">
+          <div class="env-back"></div>
+          <div class="env-letter"></div>
+          <div class="env-flap"></div>
+          <div class="env-heart">❤️</div>
+        </div>
+      </div>
+
+      <p class="tap-hint">Chạm vào đây nè anh iuu 💌</p>
+      <p class="opening-note">Một chút tình iu em dành cho anh, mở ra rồi thì đọc hết nha.</p>
+    </div>
+  </section>
+
+  <button class="music-toggle" id="musicToggle" type="button" aria-label="Bật hoặc tắt nhạc" aria-pressed="false">🎵</button>
+  <audio id="music" src="music.mp3" loop preload="auto"></audio>
+
+  <main class="main" id="main">
+    <section class="hero">
+      <div class="float-layer" id="floatLayer" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <p class="eyebrow">Dành riêng cho anh</p>
+        <h1>Gửi Hồng Phúc <span>❤️</span></h1>
+        <p class="hero-note">Có những điều rất bình thường, nhưng chỉ cần có đúng người bên cạnh thì tự nhiên lại trở nên thật đặc biệt.</p>
+        <span class="scroll-cue">Kéo xuống đọc nha</span>
+      </div>
+    </section>
+
+    <section class="section" id="letterSection">
+      <div class="section-heading reveal">
+        <p class="section-kicker">Điều em muốn nói</p>
+        <h2 class="section-title">Tình iu em dành cho anh</h2>
+      </div>
+
+      <article class="paper reveal">
+        <div class="paper-top">
+          <span class="paper-label">một chút thương gửi anh</span>
+          <h3 class="letter-title">Gửi anh iu của em ❤️</h3>
+        </div>
+
+        <div class="letter">
+          <p>Thật may mắn khi em được gặp anh vào một ngày mưa tháng 6. Từ một người xa lạ, anh dần trở thành người mà em yêu thương. Và em mong chúng mình sẽ có thêm nhiều ngày được gặp nhau, cùng nhau viết lên thật nhiều kỷ niệm.</p>
+
+          <p>Có lẽ anh từng trải qua nhiều tổn thương, đã quen với việc tự mình chịu đựng, tự mình bước qua, tự mình giấu đi những lúc không vui. Vì vậy em rất thương anh, thương cả cách anh dù mệt vẫn dành thời gian cho em, vẫn nhớ đến em giữa những điều anh phải bận tâm mỗi ngày. Nên em mong bốn mùa của anh đều được bình an, được yêu thương và chở che, mong cuộc đời dành cho anh thật nhiều niềm vui, để những tổn thương cũ rồi cũng dần được xoa dịu bằng những ngày tháng thật đẹp. Mong mỗi ngày anh bước ra ngoài thế giới rộng lớn này, cuộc đời sẽ đối xử với anh nhẹ nhàng hơn, để những điều từng khiến anh đau lòng dần được chữa lành.</p>
+
+          <p>Em chúc tất cả những ước mơ và hoài bão của anh, dù lớn hay nhỏ đều sẽ trở thành hiện thực, trên con đường anh đi sẽ có thật nhiều điều tốt đẹp tìm đến.</p>
+
+          <p>Em thích những ngày bình thường khi ở cạnh anh. Cùng anh đi ăn tối, nghe anh kể những chuyện vụn vặt trong ngày, cùng anh đi đâu đó chẳng cần có kế hoạch. Chỉ mong sau này mình sẽ có thêm thật nhiều ngày như thế.</p>
+
+          <p class="english">Hand in hand. You and me. Today, tomorrow, and forever…</p>
+
+          <p class="love-line">Em yêu anh 💞</p>
+
+          <div class="signature">Lưu Ly</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="section" id="gallerySection">
+      <div class="section-heading reveal">
+        <p class="section-kicker">Những khoảnh khắc nhỏ</p>
+        <h2 class="section-title">Mấy tấm này cũng bình thường thôi, nhưng vì có anh nên thành đặc biệt 🤩</h2>
+      </div>
+
+      <div class="gallery">
+        <!-- Ảnh 1: kích thước lớn -->
+        <figure class="photo large reveal" data-full="images/anh1.jpg">
+          <img src="images/anh1.jpg" alt="Kỷ niệm của Lưu Ly và Hồng Phúc" loading="lazy">
+          <figcaption class="photo-caption">một khoảnh khắc nhỏ ❤️</figcaption>
+        </figure>
+
+        <div class="gallery-row">
+          <figure class="photo reveal" data-full="images/anh2.jpg">
+            <img src="images/anh2.jpg" alt="Kỷ niệm của Lưu Ly và Hồng Phúc" loading="lazy">
+            <figcaption class="photo-caption">có anh là vui 💞</figcaption>
+          </figure>
+
+          <figure class="photo reveal" data-full="images/anh3.jpg">
+            <img src="images/anh3.jpg" alt="Kỷ niệm của Lưu Ly và Hồng Phúc" loading="lazy">
+            <figcaption class="photo-caption">thêm một tấm nữa 💘</figcaption>
+          </figure>
+        </div>
+
+        <!-- Ảnh 4: cố tình dùng cùng aspect-ratio/kích thước lớn như ảnh 1 -->
+        <figure class="photo large reveal" data-full="images/anh4.jpg">
+          <img src="images/anh4.jpg" alt="Kỷ niệm của Lưu Ly và Hồng Phúc" loading="lazy">
+          <figcaption class="photo-caption">và tấm này cũng đặc biệt ❤️</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="ending">
+      <div class="ending-card reveal">
+        <h2>Em yêu anh ❤️</h2>
+        <p>Hy vọng những ngày bình thường sau này của mình sẽ có thật nhiều bữa tối, nhiều câu chuyện vụn vặt, nhiều lần nắm tay và thật nhiều khoảnh khắc để cùng nhau nhớ về.</p>
+        <div class="from">Lưu Ly gửi Hồng Phúc 💞</div>
+      </div>
+    </section>
+
+    <footer>made with love, just for you ❤️</footer>
+  </main>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Đóng ảnh">×</button>
+    <img id="lightboxImage" src="" alt="">
+  </div>
+
+  <script>
+    const opening = document.getElementById('opening');
+    const envelope = document.getElementById('envelope');
+    const main = document.getElementById('main');
+    const music = document.getElementById('music');
+    const musicToggle = document.getElementById('musicToggle');
+    const floatLayer = document.getElementById('floatLayer');
+
+    let musicOn = false;
+    let opened = false;
+    let heartTimer = null;
+
+    function startMusic() {
+      music.volume = 0.55;
+      const playPromise = music.play();
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(() => {
+          musicOn = true;
+          musicToggle.textContent = '🔊';
+          musicToggle.setAttribute('aria-pressed', 'true');
+        }).catch(() => {
+          musicOn = false;
+          musicToggle.textContent = '🎵';
+          musicToggle.setAttribute('aria-pressed', 'false');
+        });
+      }
+    }
+
+    function stopMusic() {
+      music.pause();
+      musicOn = false;
+      musicToggle.textContent = '🎵';
+      musicToggle.setAttribute('aria-pressed', 'false');
+    }
+
+    musicToggle.addEventListener('click', () => {
+      if (musicOn) stopMusic();
+      else startMusic();
+    });
+
+    function createHeart() {
+      if (!main.classList.contains('visible')) return;
+
+      const heart = document.createElement('span');
+      const types = ['❤️','💞','💘'];
+      heart.className = 'float-heart';
+      heart.textContent = types[Math.floor(Math.random() * types.length)];
+
+      const size = 15 + Math.random() * 11;
+      const x = Math.random() * 100;
+      const drift = (Math.random() * 90 - 45).toFixed(0) + 'px';
+      const duration = (8.5 + Math.random() * 4.5).toFixed(2) + 's';
+      const opacity = (0.45 + Math.random() * 0.30).toFixed(2);
+      const rotate = (Math.random() * 32 - 16).toFixed(0) + 'deg';
+
+      heart.style.fontSize = size + 'px';
+      heart.style.setProperty('--x', x + 'vw');
+      heart.style.setProperty('--drift', drift);
+      heart.style.setProperty('--duration', duration);
+      heart.style.setProperty('--opacity', opacity);
+      heart.style.setProperty('--rotate', rotate);
+
+      floatLayer.appendChild(heart);
+      heart.addEventListener('animationend', () => heart.remove(), {once:true});
+    }
+
+    function beginHearts() {
+      if (heartTimer) return;
+      // A little more than the previous version, but deliberately sparse.
+      for (let i = 0; i < 5; i++) setTimeout(createHeart, i * 280);
+      heartTimer = setInterval(createHeart, 1100);
+    }
+
+    function openLetter() {
+      if (opened) return;
+      opened = true;
+      envelope.classList.add('opened');
+
+      // This click is the user gesture used to satisfy mobile autoplay rules.
+      startMusic();
+
+      setTimeout(() => {
+        opening.classList.add('hidden');
+        document.body.classList.remove('locked');
+        main.classList.add('visible');
+        beginHearts();
+        setTimeout(initReveal, 120);
+      }, 650);
+    }
+
+    envelope.addEventListener('click', openLetter);
+    envelope.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openLetter();
+      }
+    });
+
+    // Reveal on scroll.
+    function initReveal() {
+      const items = document.querySelectorAll('.reveal');
+      if (!('IntersectionObserver' in window)) {
+        items.forEach(el => el.classList.add('visible'));
+        return;
+      }
+
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, {threshold:0.12, rootMargin:'0px 0px -30px 0px'});
+
+      items.forEach(el => observer.observe(el));
+    }
+
+    // Gallery lightbox.
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
+    const lightboxClose = document.getElementById('lightboxClose');
+
+    document.querySelectorAll('.photo').forEach(photo => {
+      photo.addEventListener('click', () => {
+        lightboxImage.src = photo.dataset.full;
+        lightboxImage.alt = photo.querySelector('img').alt;
+        lightbox.classList.add('open');
+        lightbox.setAttribute('aria-hidden','false');
+        document.body.classList.add('locked');
+      });
+    });
+
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      lightbox.setAttribute('aria-hidden','true');
+      document.body.classList.remove('locked');
+      setTimeout(() => { lightboxImage.src = ''; }, 250);
+    }
+
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+    });
+
+    // Keep a few hearts alive even if the browser throttles intervals.
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && main.classList.contains('visible')) {
+        for (let i = 0; i < 2; i++) setTimeout(createHeart, i * 400);
+      }
+    });
+  </script>
+</body>
+</html>
