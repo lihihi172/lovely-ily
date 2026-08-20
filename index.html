@@ -74,7 +74,7 @@
     .opening-kicker{
       margin:0 0 12px;
       color:var(--muted);
-      font-size:12px;
+      font-size:14px;
       letter-spacing:.08em;
       text-transform:uppercase;
     }
@@ -136,13 +136,6 @@
       z-index:2;
       transition:transform .8s var(--ease);
     }
-    .env-letter::before{
-      content:"Gửi Hồng Phúc";
-      position:absolute;
-      inset:18% 12% auto;
-      color:var(--c5);
-      font-size:15px;
-    }
     .env-heart{
       position:absolute;
       left:50%;
@@ -169,8 +162,8 @@
       margin:10px 0 0;
       max-width:300px;
       color:var(--muted);
-      font-size:11px;
-      line-height:1.65;
+      font-size:13px;
+      line-height:1.7;
     }
     @keyframes breathe{50%{transform:translateY(-3px);opacity:.68}}
 
@@ -237,7 +230,7 @@
     .eyebrow{
       margin:0 0 18px;
       color:var(--c5);
-      font-size:11px;
+      font-size:13px;
       letter-spacing:.1em;
       text-transform:uppercase;
     }
@@ -253,7 +246,7 @@
       width:min(100%,560px);
       margin:20px auto 0;
       color:var(--muted);
-      font-size:16px;
+      font-size:17px;
       line-height:1.85;
     }
     .scroll-cue{
@@ -262,15 +255,8 @@
       gap:8px;
       margin-top:30px;
       color:var(--c5);
-      font-size:11px;
+      font-size:14px;
       opacity:.8;
-    }
-    .scroll-cue::after{
-      content:"";
-      width:1px;
-      height:28px;
-      background:var(--c4);
-      opacity:.6;
     }
 
     .section{
@@ -285,7 +271,7 @@
     .section-kicker{
       margin:0 0 10px;
       color:var(--c5);
-      font-size:11px;
+      font-size:13px;
       letter-spacing:.08em;
       text-transform:uppercase;
     }
@@ -301,7 +287,7 @@
       margin:12px auto 0;
       max-width:620px;
       color:var(--muted);
-      font-size:13px;
+      font-size:15px;
       line-height:1.75;
     }
 
@@ -337,7 +323,7 @@
       border-radius:999px;
       background:#fff0f4;
       color:var(--c5);
-      font-size:10px;
+      font-size:12px;
       letter-spacing:.06em;
     }
     .letter-title{
@@ -353,12 +339,12 @@
     }
     .letter p{
       margin:0 0 19px;
-      font-size:15px;
+      font-size:17px;
       line-height:2;
       overflow-wrap:anywhere;
     }
     .letter .salute{
-      font-size:19px;
+      font-size:20px;
       line-height:1.7;
       color:var(--c5);
       margin-bottom:22px;
@@ -366,13 +352,13 @@
     .letter .english{
       text-align:center;
       color:var(--ink);
-      font-size:17px;
+      font-size:19px;
       line-height:1.8;
       margin:28px 0;
     }
     .letter .love-line{
       color:var(--c5);
-      font-size:18px;
+      font-size:19px;
       line-height:1.8;
       margin:28px 0 0;
     }
@@ -380,7 +366,7 @@
       margin-top:28px;
       text-align:right;
       color:var(--c5);
-      font-size:18px;
+      font-size:19px;
     }
 
     /* ---------- Gallery ---------- */
@@ -417,7 +403,7 @@
       border-radius:999px;
       background:rgba(255,253,253,.83);
       color:var(--c5);
-      font-size:10px;
+      font-size:12px;
       backdrop-filter:blur(8px);
     }
     .gallery-row{
@@ -466,7 +452,7 @@
       width:min(100%,520px);
       margin:22px auto 0;
       color:var(--muted);
-      font-size:13px;
+      font-size:14px;
       line-height:1.9;
     }
     .from{
@@ -481,14 +467,16 @@
       font-size:10px;
     }
 
-    /* ---------- Floating hearts: only ❤️ 💞 💘 ---------- */
+    /* ---------- Floating hearts: 🩷 💗 ❤️‍🔥 💖 💘 💓 💝 💕 ---------- */
     .float-heart{
       position:fixed;
       left:0;
       bottom:-48px;
       z-index:40;
-      pointer-events:none;
+      pointer-events:auto;
       user-select:none;
+      cursor:pointer;
+      touch-action:none;
       will-change:transform,opacity;
       animation:rise var(--duration) linear forwards;
       filter:drop-shadow(0 7px 10px rgba(185,72,103,.12));
@@ -498,6 +486,116 @@
       12%{opacity:var(--opacity)}
       78%{opacity:var(--opacity)}
       100%{transform:translate3d(calc(var(--x) + var(--drift)), -115svh, 0) scale(1.04) rotate(var(--rotate));opacity:0}
+    }
+    .float-heart.interactive-hold{
+      animation-play-state:paused!important;
+      transition:transform .18s ease, left .18s ease, top .18s ease, opacity .18s ease;
+      z-index:70;
+    }
+    .float-heart.grouped-heart{
+      animation-play-state:paused!important;
+      transition:transform .25s ease, left .25s ease, top .25s ease, opacity .2s ease;
+      z-index:69;
+    }
+    .heart-pop{
+      position:fixed;
+      z-index:85;
+      pointer-events:none;
+      font-size:24px;
+      animation:heartPop .5s ease-out forwards;
+      filter:drop-shadow(0 5px 8px rgba(185,72,103,.16));
+    }
+    @keyframes heartPop{
+      0%{transform:translate(-50%,-50%) scale(.55);opacity:1}
+      70%{transform:translate(-50%,-50%) scale(1.45);opacity:.95}
+      100%{transform:translate(-50%,-50%) scale(1.9);opacity:0}
+    }
+    .heart-ring{
+      position:fixed;
+      z-index:84;
+      width:22px;
+      height:22px;
+      border:2px solid rgba(251,111,146,.65);
+      border-radius:50%;
+      pointer-events:none;
+      animation:ringPop .45s ease-out forwards;
+    }
+    @keyframes ringPop{
+      0%{transform:translate(-50%,-50%) scale(.4);opacity:.85}
+      100%{transform:translate(-50%,-50%) scale(2.8);opacity:0}
+    }
+
+
+    /* ---------- One-minute heart spell ---------- */
+    .heart-spell{
+      position:fixed;
+      inset:0;
+      z-index:180;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      background:rgba(255,246,249,.76);
+      backdrop-filter:blur(8px);
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+      transition:opacity .35s ease, visibility .35s ease;
+    }
+    .heart-spell.show{
+      opacity:1;
+      visibility:visible;
+    }
+    .heart-spell-card{
+      position:relative;
+      width:min(88vw,430px);
+      padding:32px 24px 30px;
+      text-align:center;
+      border:1px solid rgba(251,111,146,.18);
+      border-radius:28px;
+      background:linear-gradient(180deg,#fffefe,#fff5f8);
+      box-shadow:0 28px 70px rgba(185,72,103,.18);
+      transform:scale(.72) translateY(14px);
+      opacity:0;
+    }
+    .heart-spell.show .heart-spell-card{
+      animation:spellOpen 3s ease forwards;
+    }
+    .spell-hearts{
+      margin-bottom:14px;
+      font-size:24px;
+      letter-spacing:5px;
+      filter:drop-shadow(0 5px 8px rgba(185,72,103,.12));
+    }
+    .spell-text{
+      color:var(--c5);
+      font-size:clamp(22px,6.5vw,32px);
+      line-height:1.6;
+      font-weight:400;
+    }
+    .heart-spell-glow{
+      position:absolute;
+      width:min(70vw,360px);
+      height:min(70vw,360px);
+      border-radius:50%;
+      background:radial-gradient(circle,rgba(255,183,204,.34),rgba(255,183,204,0) 68%);
+      transform:scale(.4);
+      opacity:0;
+    }
+    .heart-spell.show .heart-spell-glow{
+      animation:spellGlow 3s ease forwards;
+    }
+    @keyframes spellOpen{
+      0%{transform:scale(.72) translateY(14px);opacity:0}
+      18%{transform:scale(1.03) translateY(0);opacity:1}
+      30%{transform:scale(1) translateY(0);opacity:1}
+      82%{transform:scale(1) translateY(0);opacity:1}
+      100%{transform:scale(.96) translateY(-4px);opacity:0}
+    }
+    @keyframes spellGlow{
+      0%{transform:scale(.4);opacity:0}
+      18%{transform:scale(1);opacity:1}
+      82%{transform:scale(1.15);opacity:.55}
+      100%{transform:scale(1.35);opacity:0}
     }
 
     /* ---------- Lightbox ---------- */
@@ -561,14 +659,30 @@
         transition-duration:.001ms!important;
       }
     }
-  </style>
+  
+    .spell-phone{
+      display:block;
+      margin-top:10px;
+      font-size:.42em;
+      line-height:1.5;
+      font-weight:600;
+      letter-spacing:.01em;
+      opacity:.9;
+    }
+
+
+    .section-kicker, .section-kicker {
+      font-size:13px !important;
+    }
+
+</style>
 </head>
 
 <body class="locked">
   <!-- Opening -->
   <section class="opening" id="opening" aria-label="Phong thư mở đầu">
     <div class="opening-deco" aria-hidden="true">
-      <span>❤️</span><span>💞</span><span>💘</span><span>❤️</span>
+      <span>🩷</span><span>💗</span><span>💘</span><span>💝</span>
     </div>
 
     <div class="opening-inner">
@@ -677,6 +791,15 @@
     <footer>made with love, just for you ❤️</footer>
   </main>
 
+
+  <div class="heart-spell" id="heartSpell" aria-hidden="true">
+    <div class="heart-spell-glow"></div>
+    <div class="heart-spell-card">
+      <div class="spell-hearts" aria-hidden="true">🩷 💗 💝</div>
+      <div class="spell-text">Em nhớ anh,<br>rất nhớ rất nhớ anh<span class="spell-phone">hãy gọi cho em ngay ik 📞</span></div>
+    </div>
+  </div>
+
   <div class="lightbox" id="lightbox" aria-hidden="true">
     <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Đóng ảnh">×</button>
     <img id="lightboxImage" src="" alt="">
@@ -722,11 +845,198 @@
       else startMusic();
     });
 
+    // Interactive floating-heart system: tap = tiny pop sound + burst;
+    // long-press grows in five stages; multi-touch can collect other hearts
+    // into the held heart until the anchor is released.
+    let audioCtx = null;
+    let activeHeartHold = null;
+    let heartHoldTimer = null;
+    let heartHoldStage = 0;
+    let heartHoldStartedAt = 0;
+    let heartGroup = new Set();
+    let heartSpellTimer = null;
+    let heartSpellShown = false;
+
+    function getAudioContext(){
+      try{
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      }catch(e){ return null; }
+    }
+
+    function softPopSound(){
+      const ctx = getAudioContext();
+      if(!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(760, now + .09);
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.exponentialRampToValueAtTime(.045, now + .012);
+      gain.gain.exponentialRampToValueAtTime(.0001, now + .13);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + .14);
+    }
+
+    function popVisual(heart){
+      const r = heart.getBoundingClientRect();
+      const x = r.left + r.width/2;
+      const y = r.top + r.height/2;
+      const burst = document.createElement('span');
+      burst.className = 'heart-pop';
+      burst.textContent = heart.textContent;
+      burst.style.left = x + 'px';
+      burst.style.top = y + 'px';
+      document.body.appendChild(burst);
+      const ring = document.createElement('span');
+      ring.className = 'heart-ring';
+      ring.style.left = x + 'px';
+      ring.style.top = y + 'px';
+      document.body.appendChild(ring);
+      setTimeout(()=>{burst.remove(); ring.remove();}, 550);
+    }
+
+    function pinHeartAtCurrentPosition(heart){
+      const r = heart.getBoundingClientRect();
+      heart.style.animation = 'none';
+      heart.style.left = (r.left + r.width/2) + 'px';
+      heart.style.top = (r.top + r.height/2) + 'px';
+      heart.style.bottom = 'auto';
+      heart.style.transform = 'translate(-50%,-50%) scale(1)';
+      heart.dataset.pinned = 'true';
+      return {x:r.left + r.width/2, y:r.top + r.height/2};
+    }
+
+    function releaseHeart(heart, shouldContinue=true){
+      if(!heart || !document.body.contains(heart)) return;
+      if(!shouldContinue) return;
+      const r = heart.getBoundingClientRect();
+      const x = Math.max(2, Math.min(98, (r.left + r.width/2) / innerWidth * 100));
+      heart.style.animation = 'none';
+      heart.style.left = x + 'vw';
+      heart.style.top = 'auto';
+      heart.style.bottom = '-48px';
+      heart.style.transform = 'translate3d(-50%,0,0) scale(.72)';
+      heart.style.opacity = '0';
+      void heart.offsetWidth;
+      heart.style.animation = `rise ${heart.dataset.resumeDuration || '8.8s'} linear forwards`;
+      heart.style.setProperty('--x', x + 'vw');
+      heart.style.setProperty('--drift', heart.dataset.resumeDrift || '0px');
+      heart.style.setProperty('--rotate', heart.dataset.resumeRotate || '0deg');
+      heart.style.setProperty('--duration', heart.dataset.resumeDuration || '8.8s');
+      heart.dataset.pinned = 'false';
+    }
+
+
+    function showHeartSpell(){
+      const spell = document.getElementById('heartSpell');
+      if(!spell) return;
+      spell.classList.remove('show');
+      void spell.offsetWidth;
+      spell.setAttribute('aria-hidden','false');
+      spell.classList.add('show');
+      setTimeout(() => {
+        spell.classList.remove('show');
+        spell.setAttribute('aria-hidden','true');
+      }, 5000);
+    }
+
+    function clearHeartHold(){
+      if(heartHoldTimer){ clearInterval(heartHoldTimer); heartHoldTimer=null; }
+      if(heartSpellTimer){ clearTimeout(heartSpellTimer); heartSpellTimer=null; }
+      if(!activeHeartHold) return;
+      const anchor = activeHeartHold;
+      const wasLong = heartHoldStage > 0;
+      const group = Array.from(heartGroup);
+      group.forEach(h => {
+        h.classList.remove('interactive-hold','grouped-heart');
+        h.style.transition = '';
+        h.style.zIndex = '';
+        if(document.body.contains(h)) releaseHeart(h, true);
+      });
+      heartGroup.clear();
+      activeHeartHold = null;
+      heartHoldStage = 0;
+      heartHoldStartedAt = 0;
+      return wasLong;
+    }
+
+    function updateHeldHeart(){
+      if(!activeHeartHold || !document.body.contains(activeHeartHold)) return;
+
+      // Five stages, one stage every 3 seconds:
+      // 0-3s = stage 1, 3-6s = stage 2, ... 12-15s = stage 5.
+      // After 15s the heart remains at the maximum size until released.
+      const elapsed = Math.max(0, performance.now() - heartHoldStartedAt);
+      heartHoldStage = Math.min(5, Math.floor(elapsed / 3000) + 1);
+
+      const scale = 1 + heartHoldStage * .34;
+      activeHeartHold.style.transform = `translate(-50%,-50%) scale(${scale})`;
+      activeHeartHold.style.zIndex = String(70 + heartHoldStage);
+
+      const center = activeHeartHold.getBoundingClientRect();
+      const cx = center.left + center.width/2;
+      const cy = center.top + center.height/2;
+      let idx = 0;
+      heartGroup.forEach(h => {
+        if(h === activeHeartHold) return;
+        const angle = (idx++ / Math.max(1, heartGroup.size-1)) * Math.PI * 2;
+        const radius = 24 + heartHoldStage * 4;
+        h.style.left = cx + 'px';
+        h.style.top = cy + 'px';
+        h.style.bottom = 'auto';
+        h.style.transform = `translate(-50%,-50%) translate(${Math.cos(angle)*radius}px, ${Math.sin(angle)*radius}px) scale(.78)`;
+      });
+    }
+
+    function beginHeartHold(heart, pointerId){
+      if(!heart || !document.body.contains(heart)) return;
+      if(activeHeartHold && activeHeartHold !== heart){
+        // A second finger while holding the anchor collects this heart.
+        heartGroup.add(heart);
+        heart.classList.add('grouped-heart');
+        pinHeartAtCurrentPosition(heart);
+        updateHeldHeart();
+        return;
+      }
+      if(activeHeartHold === heart) return;
+      activeHeartHold = heart;
+      activeHeartHold._holdPointerId = pointerId;
+      heartGroup = new Set([heart]);
+      heart.classList.add('interactive-hold');
+      pinHeartAtCurrentPosition(heart);
+      heartHoldStage = 0;
+      heartHoldStartedAt = performance.now();
+      heartSpellShown = false;
+      if(heartSpellTimer) clearTimeout(heartSpellTimer);
+      heartSpellTimer = setTimeout(() => {
+        if(activeHeartHold === heart && document.body.contains(heart) && !heartSpellShown){
+          heartSpellShown = true;
+          showHeartSpell();
+        }
+      }, 60000);
+      heartHoldTimer = setInterval(updateHeldHeart, 100);
+    }
+
+    function tapHeart(heart){
+      if(activeHeartHold) return;
+      softPopSound();
+      popVisual(heart);
+      heart.style.transition = 'transform .18s ease, opacity .25s ease';
+      heart.style.transform = 'scale(1.45)';
+      heart.style.opacity = '0';
+      setTimeout(()=>heart.remove(), 220);
+    }
+
     function createHeart() {
       if (!main.classList.contains('visible')) return;
 
       const heart = document.createElement('span');
-      const types = ['❤️','💞','💘'];
+      const types = ['🩷','💗','❤️‍🔥','💖','💘','💓','💝','💕'];
       heart.className = 'float-heart';
       heart.textContent = types[Math.floor(Math.random() * types.length)];
 
@@ -738,13 +1048,37 @@
       const rotate = (Math.random() * 32 - 16).toFixed(0) + 'deg';
 
       heart.style.fontSize = size + 'px';
+      heart.dataset.baseSize = String(size);
       heart.style.setProperty('--x', x + 'vw');
       heart.style.setProperty('--drift', drift);
       heart.style.setProperty('--duration', duration);
       heart.style.setProperty('--opacity', opacity);
       heart.style.setProperty('--rotate', rotate);
+      heart.dataset.resumeDuration = duration;
+      heart.dataset.resumeDrift = drift;
+      heart.dataset.resumeRotate = rotate;
 
       floatLayer.appendChild(heart);
+
+      heart.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        heart.setPointerCapture?.(e.pointerId);
+        beginHeartHold(heart, e.pointerId);
+      });
+      heart.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        if(activeHeartHold === heart){
+          const wasHeldLong = clearHeartHold();
+          if(!wasHeldLong) tapHeart(heart);
+        }
+      });
+      heart.addEventListener('pointercancel', () => {
+        if(activeHeartHold === heart) clearHeartHold();
+      });
+      heart.addEventListener('lostpointercapture', () => {
+        if(activeHeartHold === heart) clearHeartHold();
+      });
+
       heart.addEventListener('animationend', () => heart.remove(), {once:true});
     }
 
@@ -828,6 +1162,12 @@
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if(activeHeartHold && e.pointerId === activeHeartHold._holdPointerId){
+        clearHeartHold();
+      }
     });
 
     // Keep a few hearts alive even if the browser throttles intervals.
