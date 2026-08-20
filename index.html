@@ -349,6 +349,8 @@
       font-size:17px;
       line-height:2;
       overflow-wrap:anywhere;
+      text-align:justify !important;
+      text-justify:inter-word;
     }
     .letter .salute{
       font-size:20px;
@@ -1135,6 +1137,33 @@ input, textarea, [contenteditable="true"] {
 }
 </style>
 
+
+<style id="definitive-final-style">
+.letter p{ text-align:justify !important; text-justify:inter-word !important; }
+#loveQuestion.show .love-question-card{
+  background:linear-gradient(135deg,#f58ab5,#e96a9f)!important;
+  border:2px solid rgba(255,255,255,.60)!important;
+  border-radius:26px!important;
+  text-align:center!important;
+}
+#loveQuestion.show .love-question-text{
+  color:#fff!important;
+  text-align:center!important;
+  font-family:Comfortaa,sans-serif!important;
+  font-size:17px!important;
+  font-weight:700!important;
+  line-height:2!important;
+}
+#gatherCounterHUD{pointer-events:none!important;}
+#gatherFiftyOverlay.show .gather-fifty-card{
+  background:linear-gradient(135deg,#f58ab5,#e96a9f)!important;
+  border:2px solid rgba(255,255,255,.60)!important;
+  color:#fff!important;
+}
+#gatherFiftyOverlay.show .gather-fifty-main{color:#fff!important;font-size:1.35em!important;font-weight:700!important;}
+#gatherFiftyOverlay.show .gather-fifty-sub{color:#fff!important;font-size:.75em!important;font-weight:600!important;}
+</style>
+
 </head>
 
 <body class="locked">
@@ -1868,7 +1897,10 @@ input, textarea, [contenteditable="true"] {
         if(e.pointerId===heart._holdPointerId && activeHeartHold===heart) clearHeartHold();
       },{passive:true});
 
-      heart.addEventListener('animationend',()=>heart.remove(),{once:true});
+      heart.addEventListener('animationend',()=>{
+        if(heart.classList.contains('grouped-heart') || gatheredHearts.has(heart)) return;
+        heart.remove();
+      },{once:true});
     }
 
     function gatherPointersStillDown(){
@@ -2069,195 +2101,207 @@ input, textarea, [contenteditable="true"] {
   
     
 
-    /* ===== FINAL BUGFIX: counter gom tim + mốc 50 + Ly/question ===== */
+    /* ===== DEFINITIVE FIX: question + gather counter + 50 ===== */
     let finalGather50Triggered = false;
     let finalGatherCounter = null;
     let finalFiftyTimer = null;
     let finalQuestionLocked = false;
-    let finalQuestionOpening = false;
 
-    function finalEnsureGatherCounter(){
+    function ensureCounter(){
       if(finalGatherCounter && document.body.contains(finalGatherCounter)) return finalGatherCounter;
-      finalGatherCounter=document.createElement('div');
-      finalGatherCounter.id='gatherCounterHUD';
-      finalGatherCounter.setAttribute('aria-hidden','true');
-      document.body.appendChild(finalGatherCounter);
+      finalGatherCounter=document.getElementById('gatherCounterHUD');
+      if(!finalGatherCounter){
+        finalGatherCounter=document.createElement('div');
+        finalGatherCounter.id='gatherCounterHUD';
+        document.body.appendChild(finalGatherCounter);
+      }
       return finalGatherCounter;
     }
-    function finalHideGatherCounter(){
-      if(finalGatherCounter) finalGatherCounter.classList.remove('show');
-    }
-    function finalUpdateGatherCounter(){
-      /* Bộ đếm phản ánh số tim thực tế còn đang được gom.
-         Không phụ thuộc gatherMode: ngón gom thứ hai có thể vừa thả nhưng
-         anchor vẫn đang giữ và nhóm tim vẫn còn > 0. */
-      if(!activeHeartHold || gatheredHearts.size===0){
-        finalHideGatherCounter();
+    function updateCounter(){
+      const count=gatheredHearts.size;
+      const c=ensureCounter();
+      if(count<=0){
+        c.classList.remove('show');
+        c.setAttribute('aria-hidden','true');
         return;
       }
-      const h=activeHeartHold;
-      if(!document.body.contains(h)){
-        finalHideGatherCounter();
-        return;
+      c.textContent=String(count);
+      const anchor=activeHeartHold;
+      let x=innerWidth/2, y=34;
+      if(anchor && document.body.contains(anchor)){
+        const r=anchor.getBoundingClientRect();
+        x=r.left+r.width/2; y=Math.max(24,r.top-18);
+      }else{
+        const hs=[...gatheredHearts].filter(h=>document.body.contains(h));
+        if(hs.length){
+          let sx=0,sy=0;
+          hs.forEach(h=>{const r=h.getBoundingClientRect();sx+=r.left+r.width/2;sy+=r.top+r.height/2;});
+          x=sx/hs.length; y=Math.max(24,sy-18);
+        }
       }
-      const c=finalEnsureGatherCounter();
-      c.textContent=String(gatheredHearts.size);
-      const r=h.getBoundingClientRect();
-      c.style.left=(r.left+r.width/2)+'px';
-      c.style.top=Math.max(24,r.top-18)+'px';
+      c.style.left=x+'px';
+      c.style.top=y+'px';
       c.classList.add('show');
       c.setAttribute('aria-hidden','false');
     }
+    function hideCounterWhenEmpty(){ if(gatheredHearts.size===0) updateCounter(); }
 
-    function finalCloseFifty(){
+    function closeFifty(){
       const box=document.getElementById('gatherFiftyOverlay');
-      if(!box)return;
-      box.classList.remove('show');
-      box.setAttribute('aria-hidden','true');
+      if(box){ box.classList.remove('show'); box.setAttribute('aria-hidden','true'); }
       if(finalFiftyTimer){clearTimeout(finalFiftyTimer);finalFiftyTimer=null;}
       finalGather50Triggered=false;
     }
-    function finalShowFifty(){
+    function showFifty(){
       const box=document.getElementById('gatherFiftyOverlay');
-      if(!box || finalGather50Triggered)return;
+      if(!box || finalGather50Triggered) return;
       finalGather50Triggered=true;
-      finalHideGatherCounter();
+      // The 50 hearts are already removed by the original gather logic.
+      updateCounter();
       box.classList.add('show');
       box.setAttribute('aria-hidden','false');
-      if(finalFiftyTimer)clearTimeout(finalFiftyTimer);
-      finalFiftyTimer=setTimeout(finalCloseFifty,50000);
+      clearTimeout(finalFiftyTimer);
+      finalFiftyTimer=setTimeout(closeFifty,50000);
     }
+    showGatherFifty=function(){showFifty();};
 
-    /* Thay hàm hiển thị mốc 50: 50 giây, không 10 giây. */
-    showGatherFifty = function(){ finalShowFifty(); };
-
-    /* Khi đủ 50, kích hoạt ngay trong cùng call-stack, không chờ release. */
-    const finalOriginalGatherOneHeart=gatherOneHeart;
+    // Keep the legacy gather function, but add a reliable immediate threshold check.
+    const originalGatherOneHeart=gatherOneHeart;
     gatherOneHeart=function(heart){
-      const beforeSize=gatheredHearts.size;
-      const result=finalOriginalGatherOneHeart(heart);
-      const reachedFifty = finalGather50Triggered || (result && beforeSize>=49 && gatherCount===0 && gatheredHearts.size===0);
-      if(reachedFifty){
-        /* Hàm gốc đã xử lý tim thứ 50 và dọn nhóm; bảo đảm hiệu ứng 50 được mở ngay. */
-        finalShowFifty();
-        finalHideGatherCounter();
+      const before=gatheredHearts.size;
+      const result=originalGatherOneHeart(heart);
+      // The legacy function resets the set after reaching 50, so detect that exact transition.
+      if(result && !finalGather50Triggered && before>=49 && gatheredHearts.size===0 && gatherCount===0){
+        showFifty();
       }else{
-        finalUpdateGatherCounter();
+        updateCounter();
       }
       return result;
     };
 
-    /* Counter cập nhật theo số tim thực tế và biến mất đúng lúc thả anchor. */
-    const finalOriginalClearHeartHold=clearHeartHold;
+    // Counter stays visible while the grouped-heart set is non-empty.
+    const originalUpdateHeldHeart=updateHeldHeart;
+    updateHeldHeart=function(){ originalUpdateHeldHeart(); updateCounter(); };
+    const originalClearHeartHold=clearHeartHold;
     clearHeartHold=function(){
-      finalHideGatherCounter();
-      const result=finalOriginalClearHeartHold();
-      finalHideGatherCounter();
+      const result=originalClearHeartHold();
+      hideCounterWhenEmpty();
       return result;
     };
 
-    const finalOriginalUpdateHeldHeart=updateHeldHeart;
-    updateHeldHeart=function(){
-      finalOriginalUpdateHeldHeart();
-      finalUpdateGatherCounter();
-    };
-
-    /* Sau khi đạt 50, release không được tạo Ly yêu Phúc. */
-    const finalOriginalShowLyMessage=showLyMessage;
-    showLyMessage=function(origin){
-      if(finalGather50Triggered)return;
-      return finalOriginalShowLyMessage(origin);
-    };
-
-    /* Câu hỏi: chỉ chính card mới được chuyển sang Gọi cho em. */
-    function finalClearQuestionTimers(){
+    /* ---------- Question: one tap -> call card, no scroll lock ---------- */
+    function clearQuestionTimers(){
       if(questionTimer){clearTimeout(questionTimer);questionTimer=null;}
       if(window.loveQuestionTimer){clearTimeout(window.loveQuestionTimer);window.loveQuestionTimer=null;}
     }
-    function finalForceQuestion(){
-      const box=document.getElementById('loveQuestion');
-      if(!box)return;
-      finalQuestionLocked=true; finalQuestionOpening=true; finalClearQuestionTimers();
-      box.classList.add('show');
-      box.setAttribute('aria-hidden','false');
-      box.style.display='flex';box.style.visibility='visible';box.style.opacity='1';box.style.pointerEvents='auto';box.style.animation='none';box.style.transition='none';
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{finalQuestionOpening=false;}));
+    function forceQuestionOpen(){
+      const q=document.getElementById('loveQuestion');
+      if(!q) return;
+      finalQuestionLocked=true;
+      clearQuestionTimers();
+      q.classList.add('show');
+      q.setAttribute('aria-hidden','false');
+      q.style.display='flex';
+      q.style.visibility='visible';
+      q.style.opacity='1';
+      q.style.pointerEvents='auto';
+      q.style.animation='none';
+      q.style.transition='none';
     }
-    function finalOpenCall(){
-      if(!finalQuestionLocked || finalQuestionOpening)return;
+    function openCallFromQuestion(){
+      if(!finalQuestionLocked) return;
       finalQuestionLocked=false;
       const q=document.getElementById('loveQuestion');
       if(q){
         q.classList.remove('show');
         q.setAttribute('aria-hidden','true');
-        q.style.display='';
-        q.style.visibility='';
-        q.style.opacity='';
-        q.style.pointerEvents='none';
-        q.style.animation='';
-        q.style.transition='';
+        q.style.display=''; q.style.visibility=''; q.style.opacity='';
+        q.style.pointerEvents=''; q.style.animation=''; q.style.transition='';
       }
-      /* Khôi phục scroll ngay sau khi chuyển bước. */
-      document.body.classList.remove('locked');
+      // Explicitly restore scrolling. Do not prevent default touch/pointer behavior.
       document.documentElement.style.overflow='';
       document.body.style.overflow='';
+      document.body.classList.remove('locked');
       showCallCard();
     }
 
-    /* Ly: capture phase, ưu tiên tuyệt đối, không cần giữ. */
+    // Override showLoveQuestion so every legacy path opens the same locked state.
+    window.showLoveQuestion=function(){forceQuestionOpen();};
+
+    // Capture only the question-card interaction. No preventDefault -> scrolling remains usable.
+    const qCard=document.querySelector('#loveQuestion .love-question-card');
+    if(qCard){
+      qCard.addEventListener('pointerup',function(e){
+        if(!finalQuestionLocked) return;
+        if(e.pointerType==='mouse' || e.pointerType==='touch' || e.pointerType==='pen'){
+          e.stopPropagation();
+          openCallFromQuestion();
+        }
+      },{capture:true,passive:true});
+      qCard.addEventListener('click',function(e){
+        if(!finalQuestionLocked) return;
+        e.stopPropagation();
+        openCallFromQuestion();
+      },{capture:true,passive:true});
+    }
+
+    // Ly priority remains capture-phase. One tap -> question.
     document.addEventListener('pointerdown',function(e){
-      const hit=e.target.closest?.('#lyMessage');
-      if(!hit || !hit.classList.contains('show') || !hit.classList.contains('flying'))return;
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();
-      hit.classList.remove('flying');hit.classList.add('stopped');hit.style.opacity='1';
+      const ly=e.target?.closest?.('#lyMessage');
+      if(!ly || !ly.classList.contains('show') || !ly.classList.contains('flying')) return;
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation?.();
       hideLyMessage();
-      finalForceQuestion();
+      forceQuestionOpen();
     },{capture:true,passive:false});
 
-    /* Khi question mở:
-       - Chạm chính card: mở Gọi cho em ngay.
-       - Chạm nơi khác: KHÔNG đóng question và KHÔNG chặn scroll.
-       Chỉ xử lý pointerdown ở capture phase để tránh lag/double-event. */
+    // Do not let legacy question handlers close/lock the page. Outside touches simply do nothing.
     document.addEventListener('pointerdown',function(e){
-      if(!finalQuestionLocked)return;
-      const inside=!!e.target.closest?.('#loveQuestion .love-question-card');
-      if(!inside)return;
-      e.stopPropagation();
-      e.stopImmediatePropagation?.();
-      finalOpenCall();
+      if(!finalQuestionLocked) return;
+      const inside=!!e.target?.closest?.('#loveQuestion .love-question-card');
+      if(inside){
+        // Do not prevent default; pointerup/click handler on card performs the transition.
+        return;
+      }
+      // Outside touch: no-op, and importantly no preventDefault.
     },{capture:true,passive:true});
 
-    /* Bảo vệ khỏi hàm hide cũ. */
-    const finalLegacyHide=hideLoveQuestion;
+    // Guard all legacy calls to hideLoveQuestion while locked.
+    const legacyHideQuestion=hideLoveQuestion;
     hideLoveQuestion=function(){
-      if(finalQuestionLocked){finalClearQuestionTimers();finalForceQuestion();return;}
-      return finalLegacyHide.apply(this,arguments);
+      if(finalQuestionLocked){clearQuestionTimers();forceQuestionOpen();return;}
+      return legacyHideQuestion.apply(this,arguments);
     };
-    window.showLoveQuestion=function(){finalForceQuestion();};
 
-    /* Hiệu ứng 50: một chạm bất kỳ khi đang hiện sẽ đóng; nếu không chạm thì 50 giây. */
+    // 50-overlay closes only on an actual user tap, otherwise it lives for 50s.
     document.addEventListener('pointerdown',function(e){
       const box=document.getElementById('gatherFiftyOverlay');
-      if(!box || !finalGather50Triggered || !box.classList.contains('show'))return;
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();
-      finalCloseFifty();
-    },{capture:true,passive:false});
-
-    /* Counter biến mất ngay khi anchor release/cancel. */
-    document.addEventListener('pointerup',function(e){
-      if(activeHeartHold && e.pointerId===activeHeartHold._holdPointerId)finalHideGatherCounter();
+      if(!finalGather50Triggered || !box?.classList.contains('show')) return;
+      if(e.target?.closest?.('.gather-fifty-card')){
+        e.stopPropagation();
+        closeFifty();
+      }else{
+        e.stopPropagation();
+        closeFifty();
+      }
     },{capture:true,passive:true});
-    document.addEventListener('pointercancel',function(){finalHideGatherCounter();},{capture:true,passive:true});
-    document.addEventListener('pointermove',function(){finalUpdateGatherCounter();},{passive:true});
 
-    /* Không copy/chọn/kéo. */
-    document.addEventListener('contextmenu',e=>e.preventDefault(),true);
-    document.addEventListener('selectstart',e=>e.preventDefault(),true);
-    document.addEventListener('dragstart',e=>e.preventDefault(),true);
-    document.addEventListener('copy',e=>e.preventDefault(),true);
-    document.addEventListener('cut',e=>e.preventDefault(),true);
+    // Counter bookkeeping: hide only when the actual group reaches zero.
+    document.addEventListener('pointerup',function(e){
+      if(activeHeartHold && e.pointerId===activeHeartHold._holdPointerId){
+        // Do not hide here unless gatheredHearts is already empty.
+        setTimeout(updateCounter,0);
+      }
+    },{capture:true,passive:true});
+    document.addEventListener('pointercancel',function(){ setTimeout(updateCounter,0); },{capture:true,passive:true});
+    document.addEventListener('pointermove',function(){ if(gatheredHearts.size>0) updateCounter(); },{passive:true});
 
-</script>
+    // Keep counter accurate if a grouped heart is removed by any legacy path.
+    setInterval(()=>{
+      if(gatheredHearts.size>0) updateCounter();
+      else hideCounterWhenEmpty();
+    },80);
+
+  </script>
 
 </body>
 </html>
