@@ -1522,7 +1522,7 @@ input, textarea, [contenteditable="true"] {
       box.classList.add('show'); box.setAttribute('aria-hidden','false');
       const close=()=>{box.classList.remove('show');box.setAttribute('aria-hidden','true')};
       clearTimeout(box._timer);
-      box._timer=setTimeout(close,10000);
+      box._timer=setTimeout(close,50000);
       box._close=close;
     }
 
@@ -1707,9 +1707,9 @@ input, textarea, [contenteditable="true"] {
       if(!activeHeartHold || !document.body.contains(activeHeartHold)) return;
       if(gatherMode || gatherPauseStartedAt) return; // pause growth + 15s clock while gathering
       const elapsed=Math.max(0,performance.now()-heartHoldStartedAt);
-      const nextStage=Math.min(10,Math.floor(elapsed/2000)+1);
+      const nextStage=Math.min(5,Math.floor(elapsed/2000)+1);
       if(nextStage!==heartHoldStage){heartHoldStage=nextStage;heartHaptic()}
-      if(elapsed>=15000 && !activeHeartHold._autoBurst){
+      if(elapsed>=10000 && !activeHeartHold._autoBurst){
         activeHeartHold._autoBurst=true; explodeHeldHeart(); return;
       }
       const scale=1+heartHoldStage*.24;
@@ -1869,13 +1869,19 @@ input, textarea, [contenteditable="true"] {
 
       heart.addEventListener('pointerdown',(e)=>{
         activePointers.set(e.pointerId,heart);
-        // Do not preventDefault: second finger must still scroll/manipulate the page.
-        if(activeHeartHold && activeHeartHold!==heart){
-          beginHeartHold(heart,e.pointerId);
-        }else{
-          try{heart.setPointerCapture?.(e.pointerId)}catch(_){}
-          beginHeartHold(heart,e.pointerId);
+        // CRITICAL MULTI-TOUCH RULE: once an anchor heart is being held,
+        // a second pointer must NEVER replace activeHeartHold. It only
+        // enters gather mode and collects hearts. Replacing the anchor here
+        // caused the second finger's pointerup to release the whole session
+        // and make gathered hearts fly while finger 1 was still down.
+        if(activeHeartHold && e.pointerId!==activeHeartHold._holdPointerId){
+          gatherMode=true;
+          pauseHoldForGather();
+          collectNearestAt(e.clientX,e.clientY);
+          return;
         }
+        try{heart.setPointerCapture?.(e.pointerId)}catch(_){}
+        beginHeartHold(heart,e.pointerId);
       },{passive:true});
 
       heart.addEventListener('pointermove',(e)=>{
@@ -2248,6 +2254,11 @@ input, textarea, [contenteditable="true"] {
     // Capture only the question-card interaction. No preventDefault -> scrolling remains usable.
     const qCard=document.querySelector('#loveQuestion .love-question-card');
     if(qCard){
+      qCard.addEventListener('pointerdown',function(e){
+        if(!finalQuestionLocked) return;
+        e.stopPropagation();
+        openCallFromQuestion();
+      },{capture:true,passive:true});
       qCard.addEventListener('pointerup',function(e){
         if(!finalQuestionLocked) return;
         if(e.pointerType==='mouse' || e.pointerType==='touch' || e.pointerType==='pen'){
