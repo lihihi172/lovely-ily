@@ -1310,6 +1310,16 @@
       gatherCount++;
       heart.classList.add('grouped-heart');
       pinHeartAtCurrentPosition(heart);
+      if(activeHeartHold && document.body.contains(activeHeartHold)){
+        const ar=activeHeartHold.getBoundingClientRect();
+        const ax=ar.left+ar.width/2, ay=ar.top+ar.height/2;
+        heart.style.transition='left .28s ease, top .28s ease, transform .28s ease, opacity .28s ease';
+        heart.style.left=ax+'px';
+        heart.style.top=ay+'px';
+        heart.style.bottom='auto';
+        heart.style.transform='translate(-50%,-50%) scale(.48)';
+        heart.style.opacity='.62';
+      }
       if(gatherCount>=50){
         gatherCount=0;
         createGatherFlyHearts();
@@ -1465,13 +1475,14 @@
       activeHeartHold.style.transform=`translate(-50%,-50%) scale(${scale})`;
       activeHeartHold.style.zIndex=String(70+heartHoldStage);
       const center=activeHeartHold.getBoundingClientRect(), cx=center.left+center.width/2, cy=center.top+center.height/2;
-      let idx=0;
       heartGroup.forEach(h=>{
         if(h===activeHeartHold)return;
-        const angle=(idx++/Math.max(1,heartGroup.size-1))*Math.PI*2;
-        const radius=24+heartHoldStage*4;
-        h.style.left=cx+'px'; h.style.top=cy+'px'; h.style.bottom='auto';
-        h.style.transform=`translate(-50%,-50%) translate(${Math.cos(angle)*radius}px,${Math.sin(angle)*radius}px) scale(.78)`;
+        h.style.left=cx+'px';
+        h.style.top=cy+'px';
+        h.style.bottom='auto';
+        h.style.transition='left .22s ease, top .22s ease, transform .22s ease, opacity .22s ease';
+        h.style.transform='translate(-50%,-50%) scale(.48)';
+        h.style.opacity='.62';
       });
     }
 
@@ -1743,8 +1754,8 @@
     function beginHearts() {
       if (heartTimer) return;
       // A little more than the previous version, but deliberately sparse.
-      for (let i = 0; i < 1; i++) setTimeout(createHeart, i * 220);
-      heartTimer = setInterval(createHeart, 5400);
+      for (let i = 0; i < 3; i++) setTimeout(createHeart, i * 220);
+      heartTimer = setInterval(createHeart, 1800);
     }
 
     function openLetter() {
@@ -1846,7 +1857,7 @@
       }
     });
   
-    // "Ly yêu Phúc" can be dragged; holding it for 10s opens the question.
+    // "Ly yêu Phúc" bay theo nhóm tim; chạm hoặc giữ rồi thả sẽ mở câu hỏi.
     const ly=document.getElementById('lyMessage');
     if(ly){
       ly.addEventListener('pointerdown',(e)=>{
@@ -1860,13 +1871,7 @@
         ly._dy=e.clientY-(r.top+r.height/2);
         lyMessageHoldStart=performance.now();
         clearTimeout(lyMessageHoldTimer);
-        lyMessageHoldTimer=setTimeout(()=>{
-          if(lyMessagePointer===e.pointerId){
-            showLoveQuestion();
-            clearTimeout(lyMessageHoldTimer);
-            lyMessageHoldTimer=null;
-          }
-        },10000);
+        lyMessageHoldTimer=null;
         try{ly.setPointerCapture?.(e.pointerId)}catch(_){}
       },{passive:true});
 
@@ -1881,6 +1886,7 @@
         if(e.pointerId!==lyMessagePointer)return;
         clearTimeout(lyMessageHoldTimer); lyMessageHoldTimer=null;
         lyMessagePointer=null; ly.classList.remove('dragging');
+        showLoveQuestion();
       };
       ly.addEventListener('pointerup',lyUp,{passive:true});
       ly.addEventListener('pointercancel',lyUp,{passive:true});
