@@ -1596,16 +1596,25 @@ input, textarea, [contenteditable="true"] {
     }
 
     function showCallCard(){
-      const q=document.getElementById('loveQuestion');
-      if(!q || !q.classList.contains('show')) return;
-      hideLoveQuestion();
+      // This transition must not depend on the question still having the
+      // `.show` class: the question handler may have already consumed the
+      // gesture and hidden it. Opening the call card is the authoritative
+      // next state.
       const wrap=document.getElementById('callCardWrap');
-      if(!wrap) return;
+      if(!wrap) return false;
+      const q=document.getElementById('loveQuestion');
+      if(q){
+        q.classList.remove('show');
+        q.setAttribute('aria-hidden','true');
+        clearTimeout(questionTimer); questionTimer=null;
+        if(window.loveQuestionTimer){clearTimeout(window.loveQuestionTimer);window.loveQuestionTimer=null;}
+      }
       wrap.classList.add('show');
       wrap.setAttribute('aria-hidden','false');
       wrap.classList.remove('pinned');
       clearTimeout(callPinTimer);
       callPinTimer=setTimeout(pinCallCard,30000);
+      return true;
     }
 
     function pinCallCard(){
@@ -1891,10 +1900,22 @@ input, textarea, [contenteditable="true"] {
         }
       };
       heart.addEventListener('pointerup',endPointer,{passive:true});
-      heart.addEventListener('pointercancel',endPointer,{passive:true});
+      // A pointercancel/lostpointercapture is a browser gesture/capture event,
+      // not proof that the user released the anchor. Never fly gathered hearts
+      // from either event. Only the real pointerup of the anchor ends the hold.
+      heart.addEventListener('pointercancel',(e)=>{
+        activePointers.delete(e.pointerId);
+        if(e.pointerId===heart._holdPointerId && activeHeartHold===heart){
+          // Keep the hold/gather state intact. The next real release is the
+          // only event allowed to call clearHeartHold().
+          return;
+        }
+        if(gatherMode) gatherMode=false;
+      },{passive:true});
       heart.addEventListener('lostpointercapture',(e)=>{
-        // Do not cancel the anchor just because another pointer is active.
-        if(e.pointerId===heart._holdPointerId && activeHeartHold===heart) clearHeartHold();
+        // Losing pointer capture must never be interpreted as a release.
+        // This is especially important on mobile during multi-touch.
+        if(e.pointerId===heart._holdPointerId && activeHeartHold===heart) return;
       },{passive:true});
 
       heart.addEventListener('animationend',()=>{
@@ -2086,11 +2107,10 @@ input, textarea, [contenteditable="true"] {
       }
     }, {capture:true});
 
-    window.addEventListener('pointerup', (e) => {
-      if(activeHeartHold && e.pointerId === activeHeartHold._holdPointerId){
-        clearHeartHold();
-      }
-    });
+    // Do not use a global pointerup to end the hold. The heart's own anchor
+    // pointerup handler is the single authoritative release path. A global
+    // listener could terminate the hold during a multi-touch gesture.
+
 
     // Keep a few hearts alive even if the browser throttles intervals.
     document.addEventListener('visibilitychange', () => {
@@ -2210,18 +2230,15 @@ input, textarea, [contenteditable="true"] {
     }
     function openCallFromQuestion(){
       if(!finalQuestionLocked) return;
+      // Consume this question gesture exactly once.
       finalQuestionLocked=false;
-      const q=document.getElementById('loveQuestion');
-      if(q){
-        q.classList.remove('show');
-        q.setAttribute('aria-hidden','true');
-        q.style.display=''; q.style.visibility=''; q.style.opacity='';
-        q.style.pointerEvents=''; q.style.animation=''; q.style.transition='';
-      }
+      clearQuestionTimers();
       // Explicitly restore scrolling. Do not prevent default touch/pointer behavior.
       document.documentElement.style.overflow='';
       document.body.style.overflow='';
       document.body.classList.remove('locked');
+      // Open the next state first; showCallCard() is deliberately independent
+      // of the question's `.show` class.
       showCallCard();
     }
 
