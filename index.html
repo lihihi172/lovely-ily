@@ -869,7 +869,7 @@
     .ly-message.dragging{cursor:grabbing}
     .ly-message-text{
       color:#fff;
-      font-size:clamp(24px,6.5vw,34px);
+      font-size:clamp(13px,3.1vw,18px);
       font-weight:700;
       line-height:1.25;
       white-space:nowrap;
@@ -882,8 +882,8 @@
     }
     @keyframes lyFlyUp{
       0%{transform:translate(-50%,-50%) translateY(0);opacity:0}
-      15%{opacity:1}
-      100%{transform:translate(-50%,-50%) translateY(-150px);opacity:1}
+      8%{opacity:1}
+      100%{transform:translate(-50%,-50%) translateY(-125svh);opacity:0}
     }
     .call-card-wrap{
       position:fixed;
@@ -940,6 +940,13 @@
     .call-card-wrap.pinned .pin-icon{position:static;font-size:20px;line-height:1}
     .call-card-wrap.pinned .call-card{cursor:pointer}
 
+
+    /* Event-only overlays: hidden until their exact JS flow is completed. */
+    #heartSpell:not(.show),#heartReaction:not(.show),#gatherFiftyOverlay:not(.show),#lyMessage:not(.show),#loveQuestion:not(.show),#callCardWrap:not(.show){
+      display:none !important; visibility:hidden !important; opacity:0 !important; pointer-events:none !important;
+    }
+    #heartSpell.show,#heartReaction.show,#gatherFiftyOverlay.show,#lyMessage.show,#loveQuestion.show,#callCardWrap.show{visibility:visible;}
+    #lyMessage.show{display:block;}
 </style>
 </head>
 
@@ -1332,13 +1339,20 @@
       const el=document.getElementById('lyMessage');
       if(!el) return;
       const x=Math.max(48,Math.min(innerWidth-48,origin?.x ?? innerWidth/2));
-      const y=Math.max(90,Math.min(innerHeight-120,(origin?.y ?? innerHeight*.55)+48));
-      el.classList.remove('show','draggable','dragging','stopped');
-      void el.offsetWidth;
-      el.classList.add('show','draggable','flying');
+      const y=Math.max(90,Math.min(innerHeight-120,(origin?.y ?? innerHeight*.55)+55));
+      el.classList.remove('show','dragging','stopped','flying');
       el.setAttribute('aria-hidden','false');
-      el.style.left=x+'px'; el.style.top=y+'px';
+      el.style.left=x+'px';
+      el.style.top=y+'px';
       el.style.transform='translate(-50%,-50%)';
+      void el.offsetWidth;
+      el.classList.add('show','flying');
+      const onEnd=(e)=>{
+        if(e.animationName!=='lyFlyUp') return;
+        el.removeEventListener('animationend',onEnd);
+        if(!el.classList.contains('stopped')) hideLyMessage();
+      };
+      el.addEventListener('animationend',onEnd);
     }
 
     function hideLyMessage(){
@@ -1366,6 +1380,8 @@
     }
 
     function showCallCard(){
+      const q=document.getElementById('loveQuestion');
+      if(!q || !q.classList.contains('show')) return;
       hideLoveQuestion();
       const wrap=document.getElementById('callCardWrap');
       if(!wrap) return;
@@ -1754,8 +1770,8 @@
     function beginHearts() {
       if (heartTimer) return;
       // A little more than the previous version, but deliberately sparse.
-      for (let i = 0; i < 3; i++) setTimeout(createHeart, i * 220);
-      heartTimer = setInterval(createHeart, 1800);
+      for (let i = 0; i < 18; i++) setTimeout(createHeart, i * 37);
+      heartTimer = setInterval(createHeart, 300);
     }
 
     function openLetter() {
@@ -1861,35 +1877,14 @@
     const ly=document.getElementById('lyMessage');
     if(ly){
       ly.addEventListener('pointerdown',(e)=>{
+        if(!ly.classList.contains('show')) return;
         e.stopPropagation();
         ly.classList.remove('flying');
         ly.classList.add('stopped');
         lyMessagePointer=e.pointerId;
-        ly.classList.add('dragging');
-        const r=ly.getBoundingClientRect();
-        ly._dx=e.clientX-(r.left+r.width/2);
-        ly._dy=e.clientY-(r.top+r.height/2);
-        lyMessageHoldStart=performance.now();
-        clearTimeout(lyMessageHoldTimer);
-        lyMessageHoldTimer=null;
         try{ly.setPointerCapture?.(e.pointerId)}catch(_){}
-      },{passive:true});
-
-      ly.addEventListener('pointermove',(e)=>{
-        if(e.pointerId!==lyMessagePointer)return;
-        const x=e.clientX-ly._dx, y=e.clientY-ly._dy;
-        ly.style.left=x+'px'; ly.style.top=y+'px';
-        ly.style.transform='translate(-50%,-50%)';
-      },{passive:true});
-
-      const lyUp=(e)=>{
-        if(e.pointerId!==lyMessagePointer)return;
-        clearTimeout(lyMessageHoldTimer); lyMessageHoldTimer=null;
-        lyMessagePointer=null; ly.classList.remove('dragging');
         showLoveQuestion();
-      };
-      ly.addEventListener('pointerup',lyUp,{passive:true});
-      ly.addEventListener('pointercancel',lyUp,{passive:true});
+      },{passive:true});
     }
 
     document.addEventListener('pointerdown',(e)=>{
