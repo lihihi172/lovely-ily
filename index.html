@@ -1086,94 +1086,53 @@ input, textarea, [contenteditable="true"] {
 })();
 </script>
 
-<style id="latest-gather-question-fix">
-/* Bộ đếm gom tim */
+
+<style id="final-gather-counter-style">
 #gatherCounterHUD{
-  position:fixed!important;
-  width:34px!important;
-  height:34px!important;
-  min-width:34px!important;
-  min-height:34px!important;
-  display:grid!important;
-  place-items:center!important;
-  border-radius:50%!important;
-  background:#f58ab5!important;
-  color:#fff!important;
-  font-family:'Comfortaa',sans-serif!important;
-  font-size:13px!important;
-  font-weight:700!important;
-  line-height:1!important;
-  text-align:center!important;
-  z-index:100002!important;
-  pointer-events:none!important;
-  user-select:none!important;
-  -webkit-user-select:none!important;
-  transform:translate(-50%,-100%)!important;
-  box-shadow:0 5px 16px rgba(185,72,103,.24)!important;
-  opacity:0!important;
-  visibility:hidden!important;
+  position:fixed !important;
+  z-index:10060 !important;
+  min-width:30px !important;
+  height:30px !important;
+  padding:0 8px !important;
+  border-radius:50% !important;
+  display:none !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#f58ab5 !important;
+  color:#fff !important;
+  font:700 14px/1 Comfortaa, sans-serif !important;
+  box-shadow:0 5px 16px rgba(210,70,130,.22) !important;
+  pointer-events:none !important;
+  transform:translate(-50%,-50%) !important;
 }
-#gatherCounterHUD.show{opacity:1!important;visibility:visible!important}
-
-/* Hiệu ứng đủ 50 */
-#gatherFiftyOverlay.show{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  position:fixed!important;
-  inset:0!important;
-  z-index:100001!important;
-  background:rgba(255,229,236,.72)!important;
-  visibility:visible!important;
-  opacity:1!important;
-  pointer-events:auto!important;
+#gatherCounterHUD.show{display:flex !important;}
+#loveQuestion.show .love-question-card{
+  width:min(88vw,520px) !important;
+  background:linear-gradient(135deg,#f58ab5,#e96a9f) !important;
+  border:2px solid rgba(255,255,255,.60) !important;
+  border-radius:26px !important;
+  padding:28px 24px !important;
+  box-shadow:0 18px 55px rgba(210,70,130,.26) !important;
+  text-align:center !important;
 }
-#gatherFiftyOverlay .gather-fifty-card{
-  width:min(88vw,480px)!important;
-  padding:28px 24px!important;
-  border-radius:26px!important;
-  background:#f58ab5!important;
-  border:2px solid rgba(255,255,255,.8)!important;
-  box-shadow:0 18px 55px rgba(185,72,103,.28)!important;
-  text-align:center!important;
-  color:#fff!important;
-  font-family:'Comfortaa',sans-serif!important;
+#loveQuestion.show .love-question-text{
+  color:#fff !important;
+  text-align:center !important;
+  font:700 17px/2 Comfortaa, sans-serif !important;
+  margin:0 !important;
 }
-#gatherFiftyOverlay .gather-fifty-main{
-  color:#fff!important;
-  font-size:clamp(24px,6.2vw,34px)!important;
-  font-weight:700!important;
-  line-height:1.35!important;
+#gatherFiftyOverlay.show .gather-fifty-card{
+  background:linear-gradient(135deg,#f58ab5,#e96a9f) !important;
+  color:#fff !important;
+  border:2px solid rgba(255,255,255,.60) !important;
+  border-radius:26px !important;
 }
-#gatherFiftyOverlay .gather-fifty-sub{
-  color:#fff!important;
-  font-size:clamp(16px,4.3vw,22px)!important;
-  font-weight:600!important;
-  line-height:1.45!important;
-  margin-top:8px!important;
+#gatherFiftyOverlay.show .gather-fifty-main{
+  color:#fff !important;
 }
-
-/* Câu hỏi: khung hồng, chữ trắng, căn giữa, cỡ bằng chữ thân thư (17px) */
-#loveQuestion .love-question-card{
-  width:min(88vw,620px)!important;
-  padding:24px 22px!important;
-  border-radius:26px!important;
-  background:#f58ab5!important;
-  border:2px solid rgba(255,255,255,.82)!important;
-  box-shadow:0 18px 55px rgba(185,72,103,.28)!important;
-  text-align:center!important;
+#gatherFiftyOverlay.show .gather-fifty-sub{
+  color:#fff !important;
 }
-#loveQuestion .love-question-text{
-  color:#fff!important;
-  font-family:'Comfortaa',sans-serif!important;
-  font-size:17px!important;
-  line-height:2!important;
-  font-weight:700!important;
-  text-align:center!important;
-  width:100%!important;
-  margin:0!important;
-}
-.letter p{text-align:justify!important;text-justify:inter-word!important}
 </style>
 
 </head>
@@ -1311,7 +1270,7 @@ input, textarea, [contenteditable="true"] {
   <div class="gather-fifty-overlay" id="gatherFiftyOverlay" aria-hidden="true">
     <div class="gather-fifty-card">
       <div class="gather-fifty-main">Em muốn anh mỗi ngày 🫂</div>
-      <div class="gather-fifty-sub">Cả 50 năm về sau 💝</div>
+      <div class="gather-fifty-sub">Bây giờ và mãi 50 năm về sau 💝</div>
     </div>
   </div>
 
@@ -2110,7 +2069,7 @@ input, textarea, [contenteditable="true"] {
   
     
 
-    /* ===== FINAL BUGFIX: counter + 50 + Ly/question ===== */
+    /* ===== FINAL BUGFIX: counter gom tim + mốc 50 + Ly/question ===== */
     let finalGather50Triggered = false;
     let finalGatherCounter = null;
     let finalFiftyTimer = null;
@@ -2126,21 +2085,26 @@ input, textarea, [contenteditable="true"] {
       return finalGatherCounter;
     }
     function finalHideGatherCounter(){
-      if(finalGatherCounter){
-        finalGatherCounter.classList.remove('show');
-        finalGatherCounter.setAttribute('aria-hidden','true');
-      }
+      if(finalGatherCounter) finalGatherCounter.classList.remove('show');
     }
     function finalUpdateGatherCounter(){
-      if(!gatherMode || !activeHeartHold || gatheredHearts.size<=0 || finalGather50Triggered){
-        finalHideGatherCounter(); return;
+      /* Bộ đếm phản ánh số tim thực tế còn đang được gom.
+         Không phụ thuộc gatherMode: ngón gom thứ hai có thể vừa thả nhưng
+         anchor vẫn đang giữ và nhóm tim vẫn còn > 0. */
+      if(!activeHeartHold || gatheredHearts.size===0){
+        finalHideGatherCounter();
+        return;
       }
-      if(!document.body.contains(activeHeartHold)){finalHideGatherCounter();return;}
+      const h=activeHeartHold;
+      if(!document.body.contains(h)){
+        finalHideGatherCounter();
+        return;
+      }
       const c=finalEnsureGatherCounter();
       c.textContent=String(gatheredHearts.size);
-      const r=activeHeartHold.getBoundingClientRect();
+      const r=h.getBoundingClientRect();
       c.style.left=(r.left+r.width/2)+'px';
-      c.style.top=Math.max(42,r.top-8)+'px';
+      c.style.top=Math.max(24,r.top-18)+'px';
       c.classList.add('show');
       c.setAttribute('aria-hidden','false');
     }
@@ -2158,33 +2122,37 @@ input, textarea, [contenteditable="true"] {
       if(!box || finalGather50Triggered)return;
       finalGather50Triggered=true;
       finalHideGatherCounter();
-      /* Đạt 50 là kết thúc nhóm đang gom: các tim gom được biến mất. */
-      gatheredHearts.forEach(h=>{try{h.remove()}catch(_){} });
-      gatheredHearts.clear();
-      gatherMode=false;
-      gatherCount=0;
       box.classList.add('show');
       box.setAttribute('aria-hidden','false');
       if(finalFiftyTimer)clearTimeout(finalFiftyTimer);
       finalFiftyTimer=setTimeout(finalCloseFifty,50000);
     }
 
-    /* Thay hàm gốc: không tạo chuỗi Ly khi vừa đạt 50. */
-    showGatherFifty=function(){finalShowFifty();};
+    /* Thay hàm hiển thị mốc 50: 50 giây, không 10 giây. */
+    showGatherFifty = function(){ finalShowFifty(); };
 
-    /* Bọc đúng điểm tăng count: hiển thị counter ngay khi tim được gom.
-       Nếu count đạt 50 thì kích hoạt ngay trong cùng thao tác. */
+    /* Khi đủ 50, kích hoạt ngay trong cùng call-stack, không chờ release. */
     const finalOriginalGatherOneHeart=gatherOneHeart;
     gatherOneHeart=function(heart){
-      if(finalGather50Triggered)return false;
+      const beforeSize=gatheredHearts.size;
       const result=finalOriginalGatherOneHeart(heart);
-      if(result){
-        if(gatherCount>=50 || finalGather50Triggered){
-          finalShowFifty();
-        }else{
-          finalUpdateGatherCounter();
-        }
+      const reachedFifty = finalGather50Triggered || (result && beforeSize>=49 && gatherCount===0 && gatheredHearts.size===0);
+      if(reachedFifty){
+        /* Hàm gốc đã xử lý tim thứ 50 và dọn nhóm; bảo đảm hiệu ứng 50 được mở ngay. */
+        finalShowFifty();
+        finalHideGatherCounter();
+      }else{
+        finalUpdateGatherCounter();
       }
+      return result;
+    };
+
+    /* Counter cập nhật theo số tim thực tế và biến mất đúng lúc thả anchor. */
+    const finalOriginalClearHeartHold=clearHeartHold;
+    clearHeartHold=function(){
+      finalHideGatherCounter();
+      const result=finalOriginalClearHeartHold();
+      finalHideGatherCounter();
       return result;
     };
 
@@ -2194,22 +2162,14 @@ input, textarea, [contenteditable="true"] {
       finalUpdateGatherCounter();
     };
 
-    const finalOriginalClearHeartHold=clearHeartHold;
-    clearHeartHold=function(){
-      finalHideGatherCounter();
-      const result=finalOriginalClearHeartHold();
-      finalHideGatherCounter();
-      return result;
-    };
-
-    /* Không để release sau mốc 50 tạo Ly yêu Phúc. */
+    /* Sau khi đạt 50, release không được tạo Ly yêu Phúc. */
     const finalOriginalShowLyMessage=showLyMessage;
     showLyMessage=function(origin){
       if(finalGather50Triggered)return;
       return finalOriginalShowLyMessage(origin);
     };
 
-    /* ===== Câu hỏi: không timer, không tự đóng ===== */
+    /* Câu hỏi: chỉ chính card mới được chuyển sang Gọi cho em. */
     function finalClearQuestionTimers(){
       if(questionTimer){clearTimeout(questionTimer);questionTimer=null;}
       if(window.loveQuestionTimer){clearTimeout(window.loveQuestionTimer);window.loveQuestionTimer=null;}
@@ -2217,52 +2177,57 @@ input, textarea, [contenteditable="true"] {
     function finalForceQuestion(){
       const box=document.getElementById('loveQuestion');
       if(!box)return;
-      finalQuestionLocked=true;
-      finalQuestionOpening=true;
-      finalClearQuestionTimers();
+      finalQuestionLocked=true; finalQuestionOpening=true; finalClearQuestionTimers();
       box.classList.add('show');
       box.setAttribute('aria-hidden','false');
-      box.style.display='flex';
-      box.style.visibility='visible';
-      box.style.opacity='1';
-      box.style.pointerEvents='auto';
-      box.style.animation='none';
-      box.style.transition='none';
+      box.style.display='flex';box.style.visibility='visible';box.style.opacity='1';box.style.pointerEvents='auto';box.style.animation='none';box.style.transition='none';
       requestAnimationFrame(()=>requestAnimationFrame(()=>{finalQuestionOpening=false;}));
     }
     function finalOpenCall(){
       if(!finalQuestionLocked || finalQuestionOpening)return;
       finalQuestionLocked=false;
-      finalClearQuestionTimers();
+      const q=document.getElementById('loveQuestion');
+      if(q){
+        q.classList.remove('show');
+        q.setAttribute('aria-hidden','true');
+        q.style.display='';
+        q.style.visibility='';
+        q.style.opacity='';
+        q.style.pointerEvents='none';
+        q.style.animation='';
+        q.style.transition='';
+      }
+      /* Khôi phục scroll ngay sau khi chuyển bước. */
+      document.body.classList.remove('locked');
+      document.documentElement.style.overflow='';
+      document.body.style.overflow='';
       showCallCard();
     }
 
-    /* Chạm Ly: capture phase, một chạm là đủ, không cần giữ. */
+    /* Ly: capture phase, ưu tiên tuyệt đối, không cần giữ. */
     document.addEventListener('pointerdown',function(e){
       const hit=e.target.closest?.('#lyMessage');
       if(!hit || !hit.classList.contains('show') || !hit.classList.contains('flying'))return;
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation?.();
-      hit.classList.remove('flying');
-      hit.classList.add('stopped');
-      hit.style.opacity='1';
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();
+      hit.classList.remove('flying');hit.classList.add('stopped');hit.style.opacity='1';
       hideLyMessage();
       finalForceQuestion();
     },{capture:true,passive:false});
 
-    /* Khi câu hỏi mở, chỉ chính card mới được phép chuyển sang Gọi cho em. */
-    ['pointerdown','pointerup','touchstart','touchend','mousedown','mouseup','click'].forEach(type=>{
-      document.addEventListener(type,function(e){
-        if(!finalQuestionLocked)return;
-        const inside=!!e.target.closest?.('#loveQuestion .love-question-card');
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation?.();
-        if(inside && type==='click' && !finalQuestionOpening)finalOpenCall();
-      },{capture:true,passive:false});
-    });
+    /* Khi question mở:
+       - Chạm chính card: mở Gọi cho em ngay.
+       - Chạm nơi khác: KHÔNG đóng question và KHÔNG chặn scroll.
+       Chỉ xử lý pointerdown ở capture phase để tránh lag/double-event. */
+    document.addEventListener('pointerdown',function(e){
+      if(!finalQuestionLocked)return;
+      const inside=!!e.target.closest?.('#loveQuestion .love-question-card');
+      if(!inside)return;
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
+      finalOpenCall();
+    },{capture:true,passive:true});
 
+    /* Bảo vệ khỏi hàm hide cũ. */
     const finalLegacyHide=hideLoveQuestion;
     hideLoveQuestion=function(){
       if(finalQuestionLocked){finalClearQuestionTimers();finalForceQuestion();return;}
@@ -2270,22 +2235,22 @@ input, textarea, [contenteditable="true"] {
     };
     window.showLoveQuestion=function(){finalForceQuestion();};
 
-    /* Hiệu ứng 50: chạm một lần bất kỳ để đóng, hoặc tự đóng sau 50 giây. */
+    /* Hiệu ứng 50: một chạm bất kỳ khi đang hiện sẽ đóng; nếu không chạm thì 50 giây. */
     document.addEventListener('pointerdown',function(e){
       const box=document.getElementById('gatherFiftyOverlay');
       if(!box || !finalGather50Triggered || !box.classList.contains('show'))return;
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation?.();
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();
       finalCloseFifty();
     },{capture:true,passive:false});
 
+    /* Counter biến mất ngay khi anchor release/cancel. */
     document.addEventListener('pointerup',function(e){
       if(activeHeartHold && e.pointerId===activeHeartHold._holdPointerId)finalHideGatherCounter();
     },{capture:true,passive:true});
     document.addEventListener('pointercancel',function(){finalHideGatherCounter();},{capture:true,passive:true});
     document.addEventListener('pointermove',function(){finalUpdateGatherCounter();},{passive:true});
 
+    /* Không copy/chọn/kéo. */
     document.addEventListener('contextmenu',e=>e.preventDefault(),true);
     document.addEventListener('selectstart',e=>e.preventDefault(),true);
     document.addEventListener('dragstart',e=>e.preventDefault(),true);
