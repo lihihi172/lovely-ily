@@ -188,7 +188,8 @@
     @keyframes floatSmall{50%{transform:translateY(-10px) rotate(8deg);opacity:.75}}
 
     /* ---------- Music ---------- */
-    .music-toggle{
+    .music-toggle{position:fixed !important;left:max(16px,env(safe-area-inset-left)) !important;right:auto !important;bottom:max(16px,env(safe-area-inset-bottom)) !important;top:auto !important;}
+    .music-toggle-original{
       position:fixed;
       z-index:90;
       top:max(16px,env(safe-area-inset-top));
@@ -796,6 +797,42 @@
     }
     .float-heart.interactive-hold{opacity:.95 !important;}
 
+
+    /* volume-bottom-left-final */
+    #musicToggle{
+      position:fixed !important;
+      left:max(16px, env(safe-area-inset-left)) !important;
+      right:auto !important;
+      top:auto !important;
+      bottom:max(16px, env(safe-area-inset-bottom)) !important;
+      z-index:250 !important;
+      width:52px !important;
+      height:52px !important;
+      min-width:52px !important;
+      min-height:52px !important;
+      padding:0 !important;
+      border-radius:50% !important;
+      border:1px solid rgba(255,255,255,.72) !important;
+      background:rgba(255,255,255,.72) !important;
+      box-shadow:0 8px 24px rgba(183,75,111,.16), inset 0 1px 0 rgba(255,255,255,.9) !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      font-size:22px !important;
+      line-height:1 !important;
+      -webkit-tap-highlight-color:transparent;
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+    }
+    #musicToggle:active{transform:scale(.94);}
+    #musicToggle:focus-visible{outline:2px solid rgba(245,122,160,.55);outline-offset:3px;}
+
+
+    /* tap-pop-local-final */
+    .heart-pop{z-index:10001!important;}
+    .heart-ring{z-index:10000!important;}
+    .heart-burst-layer{z-index:10002!important;pointer-events:none!important;}
+    .heart-burst-layer span{animation:heartBurst .78s cubic-bezier(.2,.8,.2,1) forwards!important;}
 </style>
 </head>
 
@@ -929,6 +966,32 @@
     </div>
   </div>
 
+
+  <div class="gather-fifty-overlay" id="gatherFiftyOverlay" aria-hidden="true">
+    <div class="gather-fifty-card">
+      <div class="gather-fifty-main">Em muốn anh mỗi ngày 🫂</div>
+      <div class="gather-fifty-sub">Cả 50 năm về sau 💝</div>
+    </div>
+  </div>
+
+  <div class="ly-message" id="lyMessage" aria-hidden="true">
+    <div class="ly-message-text">Ly yêu Phúc</div>
+  </div>
+
+  <div class="love-question" id="loveQuestion" aria-hidden="true">
+    <div class="love-question-card">
+      <div class="love-question-text">Anhhh có yêuuu bée hơmmm? 🫶</div>
+    </div>
+  </div>
+
+  <div class="call-card-wrap" id="callCardWrap" aria-hidden="true">
+    <div class="call-card" id="callCard">
+      <div class="pin-icon">📌</div>
+      <div class="call-small">Gọi cho em</div>
+      <a class="call-number" href="tel:0765862294">076 586 2294</a>
+    </div>
+  </div>
+
   <div class="lightbox" id="lightbox" aria-hidden="true">
     <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Đóng ảnh">×</button>
     <img id="lightboxImage" src="" alt="">
@@ -974,9 +1037,7 @@
       else startMusic();
     });
 
-    // Interactive floating-heart system: tap = tiny pop sound + burst;
-    // long-press grows in five stages; multi-touch can collect other hearts
-    // into the held heart until the anchor is released.
+    // Interactive floating-heart system
     let audioCtx = null;
     let activeHeartHold = null;
     let heartHoldTimer = null;
@@ -987,6 +1048,18 @@
     let heartSpellShown = false;
     let heartExplosionCount = 0;
     let heartReactionTimer = null;
+
+    // Multi-touch / gather state
+    const activePointers = new Map();
+    let gatherMode = false;
+    let gatherCount = 0;
+    let gatherPauseStartedAt = 0;
+    let gatheredHearts = new Set();
+    let lyMessageHoldTimer = null;
+    let lyMessageHoldStart = 0;
+    let lyMessagePointer = null;
+    let questionTimer = null;
+    let callPinTimer = null;
 
     function getAudioContext(){
       try{
@@ -1009,207 +1082,298 @@
       gain.gain.exponentialRampToValueAtTime(.045, now + .012);
       gain.gain.exponentialRampToValueAtTime(.0001, now + .13);
       osc.connect(gain).connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + .14);
-    }
-
-    function popVisual(heart){
-      const r = heart.getBoundingClientRect();
-      const x = r.left + r.width/2;
-      const y = r.top + r.height/2;
-      const burst = document.createElement('span');
-      burst.className = 'heart-pop';
-      burst.textContent = heart.textContent;
-      burst.style.left = x + 'px';
-      burst.style.top = y + 'px';
-      document.body.appendChild(burst);
-      const ring = document.createElement('span');
-      ring.className = 'heart-ring';
-      ring.style.left = x + 'px';
-      ring.style.top = y + 'px';
-      document.body.appendChild(ring);
-      setTimeout(()=>{burst.remove(); ring.remove();}, 550);
-    }
-
-    function pinHeartAtCurrentPosition(heart){
-      const r = heart.getBoundingClientRect();
-      heart.style.animation = 'none';
-      heart.style.left = (r.left + r.width/2) + 'px';
-      heart.style.top = (r.top + r.height/2) + 'px';
-      heart.style.bottom = 'auto';
-      heart.style.transform = 'translate(-50%,-50%) scale(1)';
-      heart.dataset.pinned = 'true';
-      return {x:r.left + r.width/2, y:r.top + r.height/2};
-    }
-
-    function releaseHeart(heart, shouldContinue=true){
-      if(!heart || !document.body.contains(heart)) return;
-      if(!shouldContinue) return;
-      const r = heart.getBoundingClientRect();
-      const x = Math.max(2, Math.min(98, (r.left + r.width/2) / innerWidth * 100));
-      heart.style.animation = 'none';
-      heart.style.left = x + 'vw';
-      heart.style.top = 'auto';
-      heart.style.bottom = '-48px';
-      heart.style.transform = 'translate3d(-50%,0,0) scale(.72)';
-      heart.style.opacity = '0';
-      void heart.offsetWidth;
-      heart.style.animation = `rise ${heart.dataset.resumeDuration || '8.8s'} linear forwards`;
-      heart.style.setProperty('--x', x + 'vw');
-      heart.style.setProperty('--drift', heart.dataset.resumeDrift || '0px');
-      heart.style.setProperty('--rotate', heart.dataset.resumeRotate || '0deg');
-      heart.style.setProperty('--duration', heart.dataset.resumeDuration || '8.8s');
-      heart.dataset.pinned = 'false';
-    }
-
-
-    function showHeartSpell(){
-      const spell = document.getElementById('heartSpell');
-      if(!spell) return;
-      spell.classList.remove('show');
-      void spell.offsetWidth;
-      spell.setAttribute('aria-hidden','false');
-      spell.classList.add('show');
-      setTimeout(() => {
-        spell.classList.remove('show');
-        spell.setAttribute('aria-hidden','true');
-      }, 8000);
-    }
-
-    function clearHeartHold(){
-      if(heartHoldTimer){ clearInterval(heartHoldTimer); heartHoldTimer=null; }
-      if(heartSpellTimer){ clearTimeout(heartSpellTimer); heartSpellTimer=null; }
-      if(!activeHeartHold) return;
-      const anchor = activeHeartHold;
-      const wasLong = heartHoldStage > 0;
-      const group = Array.from(heartGroup);
-      group.forEach(h => {
-        h.classList.remove('interactive-hold','grouped-heart');
-        h.style.transition = '';
-        h.style.zIndex = '';
-        if(document.body.contains(h)) releaseHeart(h, true);
-      });
-      heartGroup.clear();
-      activeHeartHold = null;
-      heartHoldStage = 0;
-      heartHoldStartedAt = 0;
-      return wasLong;
+      osc.start(now); osc.stop(now + .14);
     }
 
     function heartHaptic(){
       try{ if(navigator.vibrate) navigator.vibrate(18); }catch(_){}
     }
 
+    function popVisual(heart){
+      const r=heart.getBoundingClientRect(), x=r.left+r.width/2, y=r.top+r.height/2;
+      const burst=document.createElement('span');
+      burst.className='heart-pop'; burst.textContent=heart.textContent;
+      burst.style.left=x+'px'; burst.style.top=y+'px';
+      document.body.appendChild(burst);
+      const ring=document.createElement('span');
+      ring.className='heart-ring'; ring.style.left=x+'px'; ring.style.top=y+'px';
+      document.body.appendChild(ring);
+
+      const layer=document.createElement('div');
+      layer.className='heart-burst-layer';
+      layer.style.left=x+'px'; layer.style.top=y+'px';
+      layer.innerHTML=['🩷','💗','❤️‍🔥','💖','💘','💓','💝','💕']
+        .map((s,i)=>`<span style="--i:${i}">${s}</span>`).join('');
+      document.body.appendChild(layer);
+
+      // The heart and all burst particles originate and disappear at the tap position.
+      setTimeout(()=>{
+        burst.remove(); ring.remove(); layer.remove();
+      },900);
+    }
+
+    function pinHeartAtCurrentPosition(heart){
+      const r=heart.getBoundingClientRect();
+      heart.style.animation='none';
+      heart.style.left=(r.left+r.width/2)+'px';
+      heart.style.top=(r.top+r.height/2)+'px';
+      heart.style.bottom='auto';
+      heart.dataset.pinned='true';
+      return {x:r.left+r.width/2,y:r.top+r.height/2};
+    }
+
+    function releaseHeart(heart, shouldContinue=true){
+      if(!heart || !document.body.contains(heart) || !shouldContinue) return;
+      const r=heart.getBoundingClientRect();
+      const x=Math.max(2,Math.min(98,(r.left+r.width/2)/innerWidth*100));
+      heart.style.animation='none';
+      heart.style.left=x+'vw'; heart.style.top='auto'; heart.style.bottom='-48px';
+      heart.style.transform='translate3d(-50%,0,0) scale(.72)';
+      heart.style.opacity='0';
+      void heart.offsetWidth;
+      heart.style.animation=`rise ${heart.dataset.resumeDuration||'8.8s'} linear forwards`;
+      heart.style.setProperty('--x',x+'vw');
+      heart.style.setProperty('--drift',heart.dataset.resumeDrift||'0px');
+      heart.style.setProperty('--rotate',heart.dataset.resumeRotate||'0deg');
+      heart.style.setProperty('--duration',heart.dataset.resumeDuration||'8.8s');
+      heart.dataset.pinned='false';
+      heart.style.opacity=heart.dataset.baseOpacity||'.42';
+    }
+
+    function showHeartSpell(){
+      const spell=document.getElementById('heartSpell');
+      if(!spell) return;
+      spell.classList.remove('show'); void spell.offsetWidth;
+      spell.setAttribute('aria-hidden','false'); spell.classList.add('show');
+      clearTimeout(heartSpellTimer);
+      heartSpellTimer=setTimeout(()=>{
+        spell.classList.remove('show'); spell.setAttribute('aria-hidden','true');
+      },8000);
+    }
+
+    function pauseHoldForGather(){
+      if(activeHeartHold && !gatherPauseStartedAt){
+        gatherPauseStartedAt=performance.now();
+      }
+    }
+
+    function resumeHoldAfterGather(){
+      if(gatherPauseStartedAt){
+        heartHoldStartedAt += performance.now()-gatherPauseStartedAt;
+        gatherPauseStartedAt=0;
+      }
+    }
+
+    function createGatherFlyHearts(){
+      const arr=[...gatheredHearts].filter(h=>document.body.contains(h));
+      if(!arr.length) return;
+      arr.forEach((h,i)=>{
+        const r=h.getBoundingClientRect();
+        const p=document.createElement('span');
+        p.className='gather-fly-heart';
+        p.textContent=h.textContent;
+        p.style.left=(r.left+r.width/2)+'px';
+        p.style.top=(r.top+r.height/2)+'px';
+        p.style.setProperty('--gx',((Math.random()-.5)*180)+'px');
+        p.style.setProperty('--gy',(-100-Math.random()*170)+'px');
+        document.body.appendChild(p);
+        h.remove();
+        setTimeout(()=>p.remove(),1400);
+      });
+      gatheredHearts.clear();
+    }
+
+    function showGatherFifty(){
+      const box=document.getElementById('gatherFiftyOverlay');
+      if(!box) return;
+      box.classList.add('show'); box.setAttribute('aria-hidden','false');
+      const close=()=>{box.classList.remove('show');box.setAttribute('aria-hidden','true')};
+      clearTimeout(box._timer);
+      box._timer=setTimeout(close,10000);
+      box._close=close;
+    }
+
+    function gatherOneHeart(heart){
+      if(!heart || heart===activeHeartHold || heart.dataset.bursting==='1' || gatheredHearts.has(heart)) return false;
+      gatheredHearts.add(heart);
+      gatherCount++;
+      heart.classList.add('grouped-heart');
+      pinHeartAtCurrentPosition(heart);
+      if(gatherCount>=50){
+        gatherCount=0;
+        createGatherFlyHearts();
+        showGatherFifty();
+      }
+      return true;
+    }
+
+    function showLyMessage(){
+      const el=document.getElementById('lyMessage');
+      if(!el) return;
+      el.classList.add('show','draggable');
+      el.setAttribute('aria-hidden','false');
+      el.style.left='50%'; el.style.top='58%';
+      el.style.transform='translate(-50%,-50%)';
+    }
+
+    function hideLyMessage(){
+      const el=document.getElementById('lyMessage');
+      if(!el) return;
+      el.classList.remove('show','draggable','dragging');
+      el.setAttribute('aria-hidden','true');
+      clearTimeout(lyMessageHoldTimer);
+      lyMessageHoldTimer=null; lyMessageHoldStart=0; lyMessagePointer=null;
+    }
+
+    function showLoveQuestion(){
+      const q=document.getElementById('loveQuestion');
+      if(!q) return;
+      q.classList.add('show'); q.setAttribute('aria-hidden','false');
+      clearTimeout(questionTimer);
+      questionTimer=setTimeout(()=>hideLoveQuestion(),10000);
+    }
+
+    function hideLoveQuestion(){
+      const q=document.getElementById('loveQuestion');
+      if(!q) return;
+      q.classList.remove('show'); q.setAttribute('aria-hidden','true');
+      clearTimeout(questionTimer); questionTimer=null;
+    }
+
+    function showCallCard(){
+      hideLoveQuestion();
+      const wrap=document.getElementById('callCardWrap');
+      if(!wrap) return;
+      wrap.classList.add('show');
+      wrap.setAttribute('aria-hidden','false');
+      wrap.classList.remove('pinned');
+      clearTimeout(callPinTimer);
+      callPinTimer=setTimeout(pinCallCard,30000);
+    }
+
+    function pinCallCard(){
+      const wrap=document.getElementById('callCardWrap');
+      if(!wrap) return;
+      wrap.classList.add('pinned');
+    }
+
+    function dismissOrPinCall(e){
+      const wrap=document.getElementById('callCardWrap');
+      if(!wrap || !wrap.classList.contains('show')) return;
+      const card=document.getElementById('callCard');
+      if(card && card.contains(e.target)) return;
+      pinCallCard();
+    }
+
+    function clearHeartHold(){
+      if(heartHoldTimer){clearInterval(heartHoldTimer);heartHoldTimer=null}
+      if(heartSpellTimer){clearTimeout(heartSpellTimer);heartSpellTimer=null}
+      if(!activeHeartHold) return false;
+
+      const wasLong=heartHoldStage>0;
+      const hadGather=gatheredHearts.size>0;
+      const group=[...heartGroup];
+
+      if(hadGather){
+        // Release of the anchor ends the gather session: all collected hearts fly together.
+        createGatherFlyHearts();
+        showLyMessage();
+      }
+
+      group.forEach(h=>{
+        h.classList.remove('interactive-hold','grouped-heart');
+        h.style.transition=''; h.style.zIndex='';
+        if(document.body.contains(h)) releaseHeart(h,true);
+      });
+
+      heartGroup.clear();
+      gatheredHearts.clear();
+      gatherMode=false;
+      gatherPauseStartedAt=0;
+      activeHeartHold=null;
+      heartHoldStage=0;
+      heartHoldStartedAt=0;
+      return wasLong;
+    }
+
     function explodeHeldHeart(){
-      const heart = activeHeartHold;
+      const heart=activeHeartHold;
       if(!heart || !document.body.contains(heart)) return;
+      const r=heart.getBoundingClientRect(), x=r.left+r.width/2, y=r.top+r.height/2;
+      if(heartHoldTimer){clearInterval(heartHoldTimer);heartHoldTimer=null}
+      if(heartSpellTimer){clearTimeout(heartSpellTimer);heartSpellTimer=null}
 
-      const r = heart.getBoundingClientRect();
-      const x = r.left + r.width / 2;
-      const y = r.top + r.height / 2;
-
-      if(heartHoldTimer){ clearInterval(heartHoldTimer); heartHoldTimer=null; }
-      if(heartSpellTimer){ clearTimeout(heartSpellTimer); heartSpellTimer=null; }
-
-      const burst = document.createElement('div');
-      burst.className = 'heart-burst-layer';
-      burst.style.left = x + 'px';
-      burst.style.top = y + 'px';
-      burst.innerHTML = ['🩷','💗','❤️‍🔥','💖','💘','💓','💝','💕']
+      const burst=document.createElement('div');
+      burst.className='heart-burst-layer'; burst.style.left=x+'px'; burst.style.top=y+'px';
+      burst.innerHTML=['🩷','💗','❤️‍🔥','💖','💘','💓','💝','💕']
         .map((s,i)=>`<span style="--i:${i}">${s}</span>`).join('');
       document.body.appendChild(burst);
+      softPopSound(); heartHaptic(); registerHeartExplosion(); showHeartSpell();
 
-      softPopSound();
-      heartHaptic();
-      registerHeartExplosion();
-
-      // Sau khi giữ đủ 15 giây và trái tim nổ, mở hiệu ứng
-      // "Em nhớ anh, rất nhớ rất nhớ anh" trong 8 giây.
-      showHeartSpell();
-
-      heartGroup.forEach(h => { if(document.body.contains(h)) h.remove(); });
-      heartGroup.clear();
-      activeHeartHold = null;
-      heartHoldStage = 0;
-      heartHoldStartedAt = 0;
-
+      heartGroup.forEach(h=>{if(document.body.contains(h))h.remove()});
+      heartGroup.clear(); gatheredHearts.clear(); activeHeartHold=null;
+      heartHoldStage=0; heartHoldStartedAt=0; gatherMode=false; gatherPauseStartedAt=0;
       setTimeout(()=>burst.remove(),900);
     }
 
     function updateHeldHeart(){
       if(!activeHeartHold || !document.body.contains(activeHeartHold)) return;
-
-      // Grow every 2 seconds through ten size stages.
-      const elapsed = Math.max(0, performance.now() - heartHoldStartedAt);
-      const nextStage = Math.min(10, Math.floor(elapsed / 2000) + 1);
-      if(nextStage !== heartHoldStage){
-        heartHoldStage = nextStage;
-        heartHaptic();
+      if(gatherMode || gatherPauseStartedAt) return; // pause growth + 15s clock while gathering
+      const elapsed=Math.max(0,performance.now()-heartHoldStartedAt);
+      const nextStage=Math.min(10,Math.floor(elapsed/2000)+1);
+      if(nextStage!==heartHoldStage){heartHoldStage=nextStage;heartHaptic()}
+      if(elapsed>=15000 && !activeHeartHold._autoBurst){
+        activeHeartHold._autoBurst=true; explodeHeldHeart(); return;
       }
-
-      // Hold continuously for 15 seconds -> explode at the current position.
-      if(elapsed >= 15000 && !activeHeartHold._autoBurst){
-        activeHeartHold._autoBurst = true;
-        explodeHeldHeart();
-        return;
-      }
-
-      const scale = 1 + heartHoldStage * .24;
-      activeHeartHold.style.transform = `translate(-50%,-50%) scale(${scale})`;
-      activeHeartHold.style.zIndex = String(70 + heartHoldStage);
-
-      const center = activeHeartHold.getBoundingClientRect();
-      const cx = center.left + center.width/2;
-      const cy = center.top + center.height/2;
-      let idx = 0;
-      heartGroup.forEach(h => {
-        if(h === activeHeartHold) return;
-        const angle = (idx++ / Math.max(1, heartGroup.size-1)) * Math.PI * 2;
-        const radius = 24 + heartHoldStage * 4;
-        h.style.left = cx + 'px';
-        h.style.top = cy + 'px';
-        h.style.bottom = 'auto';
-        h.style.transform = `translate(-50%,-50%) translate(${Math.cos(angle)*radius}px, ${Math.sin(angle)*radius}px) scale(.78)`;
+      const scale=1+heartHoldStage*.24;
+      activeHeartHold.style.transform=`translate(-50%,-50%) scale(${scale})`;
+      activeHeartHold.style.zIndex=String(70+heartHoldStage);
+      const center=activeHeartHold.getBoundingClientRect(), cx=center.left+center.width/2, cy=center.top+center.height/2;
+      let idx=0;
+      heartGroup.forEach(h=>{
+        if(h===activeHeartHold)return;
+        const angle=(idx++/Math.max(1,heartGroup.size-1))*Math.PI*2;
+        const radius=24+heartHoldStage*4;
+        h.style.left=cx+'px'; h.style.top=cy+'px'; h.style.bottom='auto';
+        h.style.transform=`translate(-50%,-50%) translate(${Math.cos(angle)*radius}px,${Math.sin(angle)*radius}px) scale(.78)`;
       });
     }
 
-    function moveHeldHeart(clientX, clientY){
-      if(!activeHeartHold || !document.body.contains(activeHeartHold)) return;
-      const pad = 18;
-      const x = Math.max(pad, Math.min(innerWidth - pad, clientX));
-      const y = Math.max(pad, Math.min(innerHeight - pad, clientY));
-      activeHeartHold.style.animation = 'none';
-      activeHeartHold.style.left = x + 'px';
-      activeHeartHold.style.top = y + 'px';
-      activeHeartHold.style.bottom = 'auto';
-      activeHeartHold.style.transform = `translate(-50%,-50%) scale(${1 + heartHoldStage * .34})`;
+    function moveHeldHeart(clientX,clientY){
+      if(!activeHeartHold || !document.body.contains(activeHeartHold))return;
+      const pad=18, x=Math.max(pad,Math.min(innerWidth-pad,clientX)), y=Math.max(pad,Math.min(innerHeight-pad,clientY));
+      activeHeartHold.style.animation='none';
+      activeHeartHold.style.left=x+'px'; activeHeartHold.style.top=y+'px'; activeHeartHold.style.bottom='auto';
       updateHeldHeart();
     }
 
-    function beginHeartHold(heart, pointerId){
-      if(!heart || !document.body.contains(heart)) return;
-      if(activeHeartHold && activeHeartHold !== heart){
-        // A second finger while holding the anchor collects this heart.
-        heartGroup.add(heart);
-        heart.classList.add('grouped-heart');
-        pinHeartAtCurrentPosition(heart);
-        updateHeldHeart();
+    function beginHeartHold(heart,pointerId){
+      if(!heart || !document.body.contains(heart))return;
+      if(activeHeartHold && activeHeartHold!==heart){
+        gatherMode=true; pauseHoldForGather();
+        gatherOneHeart(heart);
         return;
       }
-      if(activeHeartHold === heart) return;
-      activeHeartHold = heart;
-      activeHeartHold._holdPointerId = pointerId;
-      heartGroup = new Set([heart]);
+      if(activeHeartHold===heart)return;
+      activeHeartHold=heart;
+      activeHeartHold._holdPointerId=pointerId;
+      heartGroup=new Set([heart]);
       heart.classList.add('interactive-hold');
       pinHeartAtCurrentPosition(heart);
-      heartHoldStage = 0;
-      heartHoldStartedAt = performance.now();
-      heart._autoBurst = false;
-      heartSpellShown = false;
-      if(heartSpellTimer) clearTimeout(heartSpellTimer);
-      heartHoldTimer = setInterval(updateHeldHeart, 100);
+      heartHoldStage=0; heartHoldStartedAt=performance.now();
+      heart._autoBurst=false;
+      heartSpellShown=false;
+      clearTimeout(heartSpellTimer);
+      heartHoldTimer=setInterval(updateHeldHeart,100);
     }
 
+    function collectNearestAt(x,y){
+      if(!activeHeartHold)return false;
+      const h=nearestHeartAt(x,y,60);
+      if(!h || h===activeHeartHold)return false;
+      gatherMode=true; pauseHoldForGather();
+      return gatherOneHeart(h);
+    }
 
     const heartReactionMessages = [
       {main:'awww 😖 anhhh cứ trêuu béeee', sub:'nhưng bé thích lắmmm ☺️'},
@@ -1290,82 +1454,162 @@
       return true;
     }
 
-    function createHeart() {
-      if (!main.classList.contains('visible')) return;
-
-      const heart = document.createElement('span');
-      const types = ['🩷','💗','❤️‍🔥','💖','💘','💓','💝','💕'];
-      heart.className = 'float-heart';
-      heart.textContent = types[Math.floor(Math.random() * types.length)];
-
-      const size = 45 + Math.random() * 33;
-      const x = Math.random() * 100;
-      const drift = (Math.random() * 90 - 45).toFixed(0) + 'px';
-      const duration = (8.5 + Math.random() * 4.5).toFixed(2) + 's';
-      const opacity = (0.45 + Math.random() * 0.30).toFixed(2);
-      const rotate = (Math.random() * 32 - 16).toFixed(0) + 'deg';
-
-      heart.style.fontSize = size + 'px';
-      heart.dataset.baseSize = String(size);
-      heart.style.setProperty('--x', x + 'vw');
-      heart.style.setProperty('--drift', drift);
-      heart.style.setProperty('--duration', duration);
-      heart.style.setProperty('--opacity', opacity);
-      heart.style.setProperty('--rotate', rotate);
-      heart.dataset.resumeDuration = duration;
-      heart.dataset.resumeDrift = drift;
-      heart.dataset.resumeRotate = rotate;
-
+    function createHeart(){
+      if(!main.classList.contains('visible')) return;
+      const heart=document.createElement('span');
+      const types=['🩷','💗','❤️‍🔥','💖','💘','💓','💝','💕'];
+      heart.className='float-heart';
+      heart.textContent=types[Math.floor(Math.random()*types.length)];
+      const size=45+Math.random()*33;
+      const x=Math.random()*100;
+      const drift=(Math.random()*90-45).toFixed(0)+'px';
+      const duration=(8.5+Math.random()*4.5).toFixed(2)+'s';
+      const opacity=(0.45+Math.random()*0.30).toFixed(2);
+      const rotate=(Math.random()*32-16).toFixed(0)+'deg';
+      heart.style.fontSize=size+'px';
+      heart.dataset.baseSize=String(size);
+      heart.dataset.baseOpacity=opacity;
+      heart.style.setProperty('--x',x+'vw');
+      heart.style.setProperty('--drift',drift);
+      heart.style.setProperty('--duration',duration);
+      heart.style.setProperty('--opacity',opacity);
+      heart.style.setProperty('--rotate',rotate);
+      heart.dataset.resumeDuration=duration;
+      heart.dataset.resumeDrift=drift;
+      heart.dataset.resumeRotate=rotate;
       floatLayer.appendChild(heart);
 
-      heart.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        heart.setPointerCapture?.(e.pointerId);
-        beginHeartHold(heart, e.pointerId);
-      });
-      heart.addEventListener('pointermove', (e) => {
-        if(activeHeartHold === heart && e.pointerId === heart._holdPointerId){
-          e.preventDefault();
-          moveHeldHeart(e.clientX, e.clientY);
+      heart.addEventListener('pointerdown',(e)=>{
+        activePointers.set(e.pointerId,heart);
+        // Do not preventDefault: second finger must still scroll/manipulate the page.
+        if(activeHeartHold && activeHeartHold!==heart){
+          beginHeartHold(heart,e.pointerId);
+        }else{
+          try{heart.setPointerCapture?.(e.pointerId)}catch(_){}
+          beginHeartHold(heart,e.pointerId);
         }
-      });
-      heart.addEventListener('pointerup', (e) => {
-        e.preventDefault();
-        if(activeHeartHold === heart){
-          const wasAutoBurst = heart._autoBurst === true;
-          const wasHeldLong = clearHeartHold();
-          if(!wasHeldLong && !wasAutoBurst && document.body.contains(heart)) tapHeart(heart);
-        }
-      });
-      heart.addEventListener('pointercancel', () => {
-        if(activeHeartHold === heart) clearHeartHold();
-      });
-      heart.addEventListener('lostpointercapture', () => {
-        if(activeHeartHold === heart) clearHeartHold();
-      });
+      },{passive:true});
 
-      heart.addEventListener('animationend', () => heart.remove(), {once:true});
+      heart.addEventListener('pointermove',(e)=>{
+        if(activeHeartHold===heart && e.pointerId===heart._holdPointerId){
+          moveHeldHeart(e.clientX,e.clientY);
+        }else if(activeHeartHold && e.pointerId!==activeHeartHold._holdPointerId){
+          // Second finger can gather hearts by moving/touching them.
+          collectNearestAt(e.clientX,e.clientY);
+        }
+      },{passive:true});
+
+      const endPointer=(e)=>{
+        activePointers.delete(e.pointerId);
+        if(activeHeartHold===heart && e.pointerId===heart._holdPointerId){
+          const wasAutoBurst=heart._autoBurst===true;
+          clearHeartHold();
+          if(!wasAutoBurst && !gatherMode && !document.body.contains(heart)) return;
+          if(!wasAutoBurst && !gatherMode && document.body.contains(heart)) tapHeart(heart);
+        }else if(gatherMode){
+          gatherMode=false;
+          if(gatherPointersStillDown()===0) resumeHoldAfterGather();
+        }
+      };
+      heart.addEventListener('pointerup',endPointer,{passive:true});
+      heart.addEventListener('pointercancel',endPointer,{passive:true});
+      heart.addEventListener('lostpointercapture',(e)=>{
+        // Do not cancel the anchor just because another pointer is active.
+        if(e.pointerId===heart._holdPointerId && activeHeartHold===heart) clearHeartHold();
+      },{passive:true});
+
+      heart.addEventListener('animationend',()=>heart.remove(),{once:true});
     }
 
+    function gatherPointersStillDown(){
+      let n=0;
+      activePointers.forEach((h,pid)=>{if(activeHeartHold && pid!==activeHeartHold._holdPointerId)n++});
+      return n;
+    }
 
-    document.addEventListener('click', (e)=>{
-      if(e.target.closest && e.target.closest('.float-heart')) return;
-      forgivingTap(e.clientX,e.clientY);
-    }, {passive:true});
+    function tapHeart(heart){
+      if(!heart || heart.dataset.bursting==='1')return;
+      heart.dataset.bursting='1'; softPopSound(); popVisual(heart); registerHeartExplosion();
+      heart.style.transition='transform .18s ease,opacity .25s ease';
+      heart.style.transform='scale(1.45)'; heart.style.opacity='0';
+      setTimeout(()=>heart.remove(),220);
+    }
 
-    document.addEventListener('touchend',(e)=>{
-      if(activeHeartHold) return;
-      for(const t of e.changedTouches){
-        if(t.target && t.target.closest && t.target.closest('.float-heart')) return;
-        if(forgivingTap(t.clientX,t.clientY)) break;
+    function nearestHeartAt(x,y,extra=54){
+      let best=null,bestD=Infinity;
+      document.querySelectorAll('.float-heart').forEach(h=>{
+        if(!document.body.contains(h)||h.dataset.bursting==='1'||h===activeHeartHold)return;
+        const r=h.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,d=Math.hypot(x-cx,y-cy);
+        const limit=Math.max(extra,Math.max(r.width,r.height)*1.2);
+        if(d<=limit&&d<bestD){best=h;bestD=d}
+      });
+      return best;
+    }
+
+    function forgivingTap(x,y){
+      if(activeHeartHold){
+        // A second finger can collect a nearby heart instead of interrupting the hold.
+        if(collectNearestAt(x,y)) return true;
+        return false;
       }
-    }, {passive:true});
+      const h=nearestHeartAt(x,y,64);
+      if(!h)return false;
+      tapHeart(h); return true;
+    }
+
+    document.addEventListener('pointerdown',(e)=>{
+      if(activeHeartHold && e.pointerId!==activeHeartHold._holdPointerId){
+        activePointers.set(e.pointerId,null);
+        if(collectNearestAt(e.clientX,e.clientY)){
+          gatherMode=true; pauseHoldForGather();
+        }
+      }
+      const q=document.getElementById('loveQuestion');
+      if(q && q.classList.contains('show') && !e.target.closest('.love-question-card')){
+        hideLoveQuestion();
+      }
+      const fifty=document.getElementById('gatherFiftyOverlay');
+      if(fifty && fifty.classList.contains('show') && !e.target.closest('.gather-fifty-card')){
+        fifty._close?.();
+      }
+      dismissOrPinCall(e);
+    },{passive:true});
+
+    document.addEventListener('pointermove',(e)=>{
+      if(!activeHeartHold)return;
+      if(e.pointerId!==activeHeartHold._holdPointerId){
+        collectNearestAt(e.clientX,e.clientY);
+      }
+    },{passive:true});
+
+    document.addEventListener('pointerup',(e)=>{
+      activePointers.delete(e.pointerId);
+      if(!activeHeartHold || e.pointerId !== activeHeartHold._holdPointerId){
+        if(gatherPointersStillDown()===0 && gatherPauseStartedAt){
+          gatherMode=false; resumeHoldAfterGather();
+        }
+      }
+    },{passive:true});
+
+    document.addEventListener('pointercancel',(e)=>{
+      activePointers.delete(e.pointerId);
+      if(gatherPointersStillDown()===0 && gatherPauseStartedAt){
+        gatherMode=false; resumeHoldAfterGather();
+      }
+    },{passive:true});
+
+    document.addEventListener('click',(e)=>{
+      if(e.target.closest?.('.float-heart'))return;
+      if(e.target.closest?.('#loveQuestion .love-question-card')){showCallCard();return}
+      if(e.target.closest?.('#loveQuestion')){hideLoveQuestion();return}
+      forgivingTap(e.clientX,e.clientY);
+    },{passive:true});
 
     function beginHearts() {
       if (heartTimer) return;
       // A little more than the previous version, but deliberately sparse.
-      for (let i = 0; i < 25; i++) setTimeout(createHeart, i * 90);
-      heartTimer = setInterval(createHeart, 220);
+      for (let i = 0; i < 8; i++) setTimeout(createHeart, i * 120);
+      heartTimer = setInterval(createHeart, 660);
     }
 
     function openLetter() {
@@ -1466,6 +1710,52 @@
         for (let i = 0; i < 2; i++) setTimeout(createHeart, i * 400);
       }
     });
-  </script>
+  
+    // "Ly yêu Phúc" can be dragged; holding it for 10s opens the question.
+    const ly=document.getElementById('lyMessage');
+    if(ly){
+      ly.addEventListener('pointerdown',(e)=>{
+        e.stopPropagation();
+        lyMessagePointer=e.pointerId;
+        ly.classList.add('dragging');
+        const r=ly.getBoundingClientRect();
+        ly._dx=e.clientX-(r.left+r.width/2);
+        ly._dy=e.clientY-(r.top+r.height/2);
+        lyMessageHoldStart=performance.now();
+        clearTimeout(lyMessageHoldTimer);
+        lyMessageHoldTimer=setTimeout(()=>{
+          if(lyMessagePointer===e.pointerId){
+            showLoveQuestion();
+            clearTimeout(lyMessageHoldTimer);
+            lyMessageHoldTimer=null;
+          }
+        },10000);
+        try{ly.setPointerCapture?.(e.pointerId)}catch(_){}
+      },{passive:true});
+
+      ly.addEventListener('pointermove',(e)=>{
+        if(e.pointerId!==lyMessagePointer)return;
+        const x=e.clientX-ly._dx, y=e.clientY-ly._dy;
+        ly.style.left=x+'px'; ly.style.top=y+'px';
+        ly.style.transform='translate(-50%,-50%)';
+      },{passive:true});
+
+      const lyUp=(e)=>{
+        if(e.pointerId!==lyMessagePointer)return;
+        clearTimeout(lyMessageHoldTimer); lyMessageHoldTimer=null;
+        lyMessagePointer=null; ly.classList.remove('dragging');
+      };
+      ly.addEventListener('pointerup',lyUp,{passive:true});
+      ly.addEventListener('pointercancel',lyUp,{passive:true});
+    }
+
+    document.addEventListener('pointerdown',(e)=>{
+      const q=document.getElementById('loveQuestion');
+      if(q?.classList.contains('show') && e.target.closest('#loveQuestion .love-question-card')){
+        showCallCard();
+      }
+    },{passive:true});
+
+</script>
 </body>
 </html>
