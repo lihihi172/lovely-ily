@@ -1075,45 +1075,23 @@ input, textarea, [contenteditable="true"] {
 }
 
 
-/* ===== CHỈ SỬA GIAO DIỆN CÂU HỎI ===== */
-#loveQuestion.show{
-  display:flex !important;
-  visibility:visible !important;
-  opacity:1 !important;
-  pointer-events:auto !important;
-  animation:none !important;
-  transition:none !important;
-}
-#loveQuestion.show .love-question-card{
-  background:linear-gradient(135deg,#f58ab5,#e96a9f)!important;
-  border:2px solid rgba(255,255,255,.55)!important;
-  border-radius:24px!important;
-  box-shadow:0 14px 40px rgba(220,70,130,.28)!important;
-  color:#fff!important;
-  padding:22px 24px!important;
-}
-#loveQuestion.show .love-question-text,
-#loveQuestion.show .question-text,
-#loveQuestion.show .love-question-card *{
-  color:#fff!important;
-  opacity:1!important;
-  visibility:visible!important;
-}
-#loveQuestion.show .love-question-text,
-#loveQuestion.show .question-text{
-  font-size:clamp(20px,5.2vw,27px)!important;
-  line-height:1.45!important;
-  font-weight:700!important;
-  text-shadow:0 1px 2px rgba(120,30,70,.18);
-}
-
-
-/* FINAL ALIGNMENT FIX */
-#loveQuestion.show{justify-content:center!important;align-items:center!important;text-align:center!important}
-#loveQuestion.show .love-question-card{margin-left:auto!important;margin-right:auto!important;text-align:center!important}
-#loveQuestion.show .love-question-text,#loveQuestion.show .question-text{width:100%!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important}
-.letter-content,.letter-body,.love-letter,.letter-text,#letterContent,.letter p{ text-align:justify!important;text-justify:inter-word!important}
-
+    /* Counter: only visible during an active gather session. */
+    #gatherCounter.gather-counter{
+      position:fixed; left:50%; top:18px; transform:translateX(-50%);
+      width:38px; height:38px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      background:#f58ab5; color:#fff;
+      font-family:Comfortaa,sans-serif; font-size:18px; font-weight:700;
+      line-height:1; z-index:100000; pointer-events:none;
+      opacity:0; visibility:hidden;
+      box-shadow:0 6px 18px rgba(220,70,130,.22);
+    }
+    #gatherCounter.gather-counter.show{ opacity:1; visibility:visible; }
+    #gatherCounterValue{ color:#fff; font-size:18px; }
+    #gatherFiftyOverlay .gather-fifty-main{font-size:clamp(25px,6vw,38px)!important;}
+    #gatherFiftyOverlay .gather-fifty-sub{font-size:clamp(17px,4vw,25px)!important;}
+    #gatherFiftyOverlay .gather-fifty-card{background:#f58ab5!important;color:#fff!important;}
+    #gatherFiftyOverlay .gather-fifty-main,#gatherFiftyOverlay .gather-fifty-sub{color:#fff!important;}
 </style>
 
 <script>
@@ -1346,6 +1324,7 @@ input, textarea, [contenteditable="true"] {
     let gatherCount = 0;
     let gatherPauseStartedAt = 0;
     let gatheredHearts = new Set();
+    let gather50Completed = false;
     let lyMessageHoldTimer = null;
     let lyMessageHoldStart = 0;
     let lyMessagePointer = null;
@@ -1442,6 +1421,22 @@ input, textarea, [contenteditable="true"] {
       },8000);
     }
 
+    function updateGatherCounter(){
+      const box=document.getElementById('gatherCounter');
+      const value=document.getElementById('gatherCounterValue');
+      if(!box || !value) return;
+      value.textContent=String(gatherCount);
+      box.classList.toggle('show', gatherMode && gatherCount>0 && !gather50Completed);
+      box.setAttribute('aria-hidden', box.classList.contains('show') ? 'false' : 'true');
+    }
+
+    function hideGatherCounter(){
+      const box=document.getElementById('gatherCounter');
+      if(!box) return;
+      box.classList.remove('show');
+      box.setAttribute('aria-hidden','true');
+    }
+
     function pauseHoldForGather(){
       if(activeHeartHold && !gatherPauseStartedAt){
         gatherPauseStartedAt=performance.now();
@@ -1484,7 +1479,7 @@ input, textarea, [contenteditable="true"] {
       box.classList.add('show'); box.setAttribute('aria-hidden','false');
       const close=()=>{box.classList.remove('show');box.setAttribute('aria-hidden','true')};
       clearTimeout(box._timer);
-      box._timer=setTimeout(close,10000);
+      box._timer=setTimeout(close,50000);
       box._close=close;
     }
 
@@ -1492,6 +1487,7 @@ input, textarea, [contenteditable="true"] {
       if(!heart || heart===activeHeartHold || heart.dataset.bursting==='1' || gatheredHearts.has(heart)) return false;
       gatheredHearts.add(heart);
       gatherCount++;
+      updateGatherCounter();
       heart.classList.add('grouped-heart');
       pinHeartAtCurrentPosition(heart);
       if(activeHeartHold && document.body.contains(activeHeartHold)){
@@ -1505,6 +1501,8 @@ input, textarea, [contenteditable="true"] {
         heart.style.opacity='.62';
       }
       if(gatherCount>=50){
+        gather50Completed=true;
+        hideGatherCounter();
         gatherCount=0;
         createGatherFlyHearts();
         showGatherFifty();
@@ -1614,8 +1612,8 @@ input, textarea, [contenteditable="true"] {
       const hadGather=gatheredHearts.size>0;
       const group=[...heartGroup];
 
-      if(hadGather){
-        // Release of the anchor ends the gather session: all collected hearts fly together at once.
+      if(hadGather && !gather50Completed){
+        // Release before 50: all collected hearts fly together at once, then Ly yêu Phúc follows them.
         const origin=createGatherFlyHearts();
         showLyMessage(origin);
       }
@@ -1628,7 +1626,9 @@ input, textarea, [contenteditable="true"] {
 
       heartGroup.clear();
       gatheredHearts.clear();
+      hideGatherCounter();
       gatherMode=false;
+      gather50Completed=false;
       gatherPauseStartedAt=0;
       activeHeartHold=null;
       heartHoldStage=0;
@@ -1651,8 +1651,8 @@ input, textarea, [contenteditable="true"] {
       softPopSound(); heartHaptic(); registerHeartExplosion(); showHeartSpell();
 
       heartGroup.forEach(h=>{if(document.body.contains(h))h.remove()});
-      heartGroup.clear(); gatheredHearts.clear(); activeHeartHold=null;
-      heartHoldStage=0; heartHoldStartedAt=0; gatherMode=false; gatherPauseStartedAt=0;
+      heartGroup.clear(); gatheredHearts.clear(); hideGatherCounter(); activeHeartHold=null;
+      heartHoldStage=0; heartHoldStartedAt=0; gatherMode=false; gatherPauseStartedAt=0; gather50Completed=false;
       setTimeout(()=>burst.remove(),900);
     }
 
@@ -1697,6 +1697,9 @@ input, textarea, [contenteditable="true"] {
       }
       if(activeHeartHold===heart)return;
       activeHeartHold=heart;
+      gather50Completed=false;
+      gatherCount=0;
+      hideGatherCounter();
       activeHeartHold._holdPointerId=pointerId;
       heartGroup=new Set([heart]);
       heart.classList.add('interactive-hold');
