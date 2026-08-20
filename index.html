@@ -233,9 +233,11 @@
     .eyebrow{
       margin:0 0 18px;
       color:var(--c5);
-      font-size:13px;
-      letter-spacing:.1em;
-      text-transform:uppercase;
+      font-size:clamp(25px,6.7vw,42px);
+      line-height:1.35;
+      font-weight:400;
+      letter-spacing:0;
+      text-transform:none;
     }
     .hero h1{
       margin:0;
@@ -258,7 +260,7 @@
       gap:8px;
       margin-top:30px;
       color:var(--c5);
-      font-size:14px;
+      font-size:16px;
       opacity:.8;
     }
 
@@ -272,11 +274,13 @@
       margin-bottom:24px;
     }
     .section-kicker{
-      margin:0 0 10px;
+      margin:0 0 14px;
       color:var(--c5);
-      font-size:13px;
-      letter-spacing:.08em;
-      text-transform:uppercase;
+      font-size:clamp(25px,6.7vw,42px);
+      line-height:1.35;
+      font-weight:400;
+      letter-spacing:0;
+      text-transform:none;
     }
     .section-title{
       margin:0 auto;
@@ -416,14 +420,15 @@
       align-items:stretch;
     }
     .gallery-row .photo{
-      aspect-ratio:auto;
+      aspect-ratio:4/3;
       height:auto;
       align-self:stretch;
       border-radius:20px;
+      background:#fffafb;
     }
     .gallery-row .photo img{
       width:100%;
-      height:auto;
+      height:100%;
       aspect-ratio:auto;
       object-fit:contain;
       display:block;
@@ -833,6 +838,108 @@
     .heart-ring{z-index:10000!important;}
     .heart-burst-layer{z-index:10002!important;pointer-events:none!important;}
     .heart-burst-layer span{animation:heartBurst .78s cubic-bezier(.2,.8,.2,1) forwards!important;}
+
+    /* Final interaction polish: gathered-heart flight + compact pinned call icon */
+    .gather-fly-heart{
+      position:fixed;
+      z-index:10020;
+      pointer-events:none;
+      font-size:clamp(28px,8vw,52px);
+      opacity:.72;
+      filter:drop-shadow(0 8px 14px rgba(185,72,103,.16));
+      animation:gatherFlyUp 1.45s cubic-bezier(.2,.75,.2,1) var(--delay,0ms) forwards;
+    }
+    @keyframes gatherFlyUp{
+      0%{transform:translate(-50%,-50%) scale(.75);opacity:.78}
+      18%{transform:translate(calc(-50% + var(--gx)*.18),calc(-50% + var(--gy)*.18)) scale(1);opacity:.9}
+      100%{transform:translate(calc(-50% + var(--gx)),calc(-50% + var(--gy))) scale(.8);opacity:0}
+    }
+    .ly-message{
+      position:fixed;
+      z-index:10030;
+      display:none;
+      pointer-events:auto;
+      user-select:none;
+      touch-action:none;
+      cursor:grab;
+    }
+    .ly-message.show{display:block}
+    .ly-message.flying{animation:lyFlyUp 1.45s cubic-bezier(.2,.75,.2,1) forwards}
+    .ly-message.stopped{animation:none!important}
+    .ly-message.dragging{cursor:grabbing}
+    .ly-message-text{
+      color:#fff;
+      font-size:clamp(24px,6.5vw,34px);
+      font-weight:700;
+      line-height:1.25;
+      white-space:nowrap;
+      text-shadow:0 5px 18px rgba(130,48,75,.28);
+      padding:8px 14px;
+      border-radius:999px;
+      background:rgba(251,111,146,.26);
+      backdrop-filter:blur(7px);
+      -webkit-backdrop-filter:blur(7px);
+    }
+    @keyframes lyFlyUp{
+      0%{transform:translate(-50%,-50%) translateY(0);opacity:0}
+      15%{opacity:1}
+      100%{transform:translate(-50%,-50%) translateY(-150px);opacity:1}
+    }
+    .call-card-wrap{
+      position:fixed;
+      inset:0;
+      z-index:10040;
+      display:none;
+      pointer-events:none;
+    }
+    .call-card-wrap.show{display:block}
+    .call-card{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:min(82vw,340px);
+      padding:28px 24px 24px;
+      border-radius:26px;
+      background:rgba(255,253,253,.96);
+      border:1px solid rgba(251,111,146,.18);
+      box-shadow:0 24px 70px rgba(185,72,103,.22);
+      text-align:center;
+      pointer-events:auto;
+      transition:transform .35s var(--ease),opacity .35s ease;
+    }
+    .pin-icon{
+      position:absolute;
+      top:10px;
+      right:12px;
+      font-size:22px;
+    }
+    .call-small{font-size:16px;color:var(--muted);margin-bottom:8px}
+    .call-number{display:block;color:var(--c5);font-size:clamp(24px,7vw,32px);font-weight:700;text-decoration:none}
+    .call-card-wrap.pinned{
+      display:block;
+      inset:auto;
+      top:max(8px,env(safe-area-inset-top));
+      right:8px;
+      width:42px;
+      height:42px;
+      pointer-events:auto;
+    }
+    .call-card-wrap.pinned .call-card{
+      top:0;left:0;
+      width:42px;height:42px;
+      padding:0;
+      border-radius:50%;
+      transform:none;
+      display:grid;
+      place-items:center;
+      background:rgba(255,253,253,.9);
+      box-shadow:0 8px 24px rgba(185,72,103,.16);
+    }
+    .call-card-wrap.pinned .call-card > :not(.pin-icon){display:none}
+    .call-card-wrap.pinned .pin-icon{position:static;font-size:20px;line-height:1}
+    .call-card-wrap.pinned .call-card{cursor:pointer}
+
 </style>
 </head>
 
@@ -857,7 +964,6 @@
       </div>
 
       <p class="tap-hint">Chạm vào đây nè anh iuu 💌</p>
-      <p class="opening-note">Một chút tình iu em dành cho anh, mở ra rồi thì đọc hết nha.</p>
     </div>
   </section>
 
@@ -1166,21 +1272,26 @@
 
     function createGatherFlyHearts(){
       const arr=[...gatheredHearts].filter(h=>document.body.contains(h));
-      if(!arr.length) return;
+      if(!arr.length) return null;
+      let sumX=0, sumY=0;
       arr.forEach((h,i)=>{
         const r=h.getBoundingClientRect();
+        const x=r.left+r.width/2, y=r.top+r.height/2;
+        sumX+=x; sumY+=y;
         const p=document.createElement('span');
         p.className='gather-fly-heart';
         p.textContent=h.textContent;
-        p.style.left=(r.left+r.width/2)+'px';
-        p.style.top=(r.top+r.height/2)+'px';
+        p.style.left=x+'px';
+        p.style.top=y+'px';
         p.style.setProperty('--gx',((Math.random()-.5)*180)+'px');
-        p.style.setProperty('--gy',(-100-Math.random()*170)+'px');
+        p.style.setProperty('--gy',(-120-Math.random()*170)+'px');
+        p.style.setProperty('--delay',(i*18)+'ms');
         document.body.appendChild(p);
         h.remove();
-        setTimeout(()=>p.remove(),1400);
+        setTimeout(()=>p.remove(),1550);
       });
       gatheredHearts.clear();
+      return {x:sumX/arr.length,y:sumY/arr.length};
     }
 
     function showGatherFifty(){
@@ -1207,12 +1318,16 @@
       return true;
     }
 
-    function showLyMessage(){
+    function showLyMessage(origin){
       const el=document.getElementById('lyMessage');
       if(!el) return;
-      el.classList.add('show','draggable');
+      const x=Math.max(48,Math.min(innerWidth-48,origin?.x ?? innerWidth/2));
+      const y=Math.max(90,Math.min(innerHeight-120,(origin?.y ?? innerHeight*.55)+48));
+      el.classList.remove('show','draggable','dragging','stopped');
+      void el.offsetWidth;
+      el.classList.add('show','draggable','flying');
       el.setAttribute('aria-hidden','false');
-      el.style.left='50%'; el.style.top='58%';
+      el.style.left=x+'px'; el.style.top=y+'px';
       el.style.transform='translate(-50%,-50%)';
     }
 
@@ -1255,13 +1370,34 @@
       const wrap=document.getElementById('callCardWrap');
       if(!wrap) return;
       wrap.classList.add('pinned');
+      clearTimeout(callPinTimer);
+      callPinTimer=null;
+    }
+
+    function openPinnedCallCard(e){
+      const wrap=document.getElementById('callCardWrap');
+      if(!wrap || !wrap.classList.contains('show') || !wrap.classList.contains('pinned')) return false;
+      if(e?.target?.closest?.('.pinned-pin')){
+        wrap.classList.remove('pinned');
+        clearTimeout(callPinTimer);
+        callPinTimer=setTimeout(pinCallCard,30000);
+        return true;
+      }
+      return false;
     }
 
     function dismissOrPinCall(e){
       const wrap=document.getElementById('callCardWrap');
       if(!wrap || !wrap.classList.contains('show')) return;
+      if(openPinnedCallCard(e)) return;
       const card=document.getElementById('callCard');
-      if(card && card.contains(e.target)) return;
+      if(card && card.contains(e.target)){
+        if(!wrap.classList.contains('pinned')){
+          clearTimeout(callPinTimer);
+          callPinTimer=setTimeout(pinCallCard,30000);
+        }
+        return;
+      }
       pinCallCard();
     }
 
@@ -1276,8 +1412,8 @@
 
       if(hadGather){
         // Release of the anchor ends the gather session: all collected hearts fly together.
-        createGatherFlyHearts();
-        showLyMessage();
+        const origin=createGatherFlyHearts();
+        showLyMessage(origin);
       }
 
       group.forEach(h=>{
@@ -1293,7 +1429,7 @@
       activeHeartHold=null;
       heartHoldStage=0;
       heartHoldStartedAt=0;
-      return wasLong;
+      return {wasLong, hadGather};
     }
 
     function explodeHeldHeart(){
@@ -1419,7 +1555,7 @@
       }
     }
 
-    function tapHeart(heart){
+    function tapHeartLegacy(heart){
       if(activeHeartHold) return;
       if(!heart || heart.dataset.bursting==='1') return;
       heart.dataset.bursting='1';
@@ -1433,7 +1569,7 @@
     }
 
 
-    function nearestHeartAt(x,y,extra=42){
+    function nearestHeartAtLegacy(x,y,extra=42){
       let best=null, bestD=Infinity;
       document.querySelectorAll('.float-heart').forEach(h=>{
         if(!document.body.contains(h) || h.dataset.bursting==='1') return;
@@ -1446,11 +1582,11 @@
       return best;
     }
 
-    function forgivingTap(x,y){
+    function forgivingTapLegacy(x,y){
       if(activeHeartHold) return false;
-      const h=nearestHeartAt(x,y,54);
+      const h=nearestHeartAtLegacy(x,y,54);
       if(!h) return false;
-      tapHeart(h);
+      tapHeartLegacy(h);
       return true;
     }
 
@@ -1503,9 +1639,8 @@
         activePointers.delete(e.pointerId);
         if(activeHeartHold===heart && e.pointerId===heart._holdPointerId){
           const wasAutoBurst=heart._autoBurst===true;
-          clearHeartHold();
-          if(!wasAutoBurst && !gatherMode && !document.body.contains(heart)) return;
-          if(!wasAutoBurst && !gatherMode && document.body.contains(heart)) tapHeart(heart);
+          const result=clearHeartHold();
+          if(!wasAutoBurst && !result.hadGather && document.body.contains(heart)) tapHeart(heart);
         }else if(gatherMode){
           gatherMode=false;
           if(gatherPointersStillDown()===0) resumeHoldAfterGather();
@@ -1608,8 +1743,8 @@
     function beginHearts() {
       if (heartTimer) return;
       // A little more than the previous version, but deliberately sparse.
-      for (let i = 0; i < 8; i++) setTimeout(createHeart, i * 120);
-      heartTimer = setInterval(createHeart, 660);
+      for (let i = 0; i < 1; i++) setTimeout(createHeart, i * 220);
+      heartTimer = setInterval(createHeart, 5400);
     }
 
     function openLetter() {
@@ -1707,7 +1842,7 @@
     // Keep a few hearts alive even if the browser throttles intervals.
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && main.classList.contains('visible')) {
-        for (let i = 0; i < 2; i++) setTimeout(createHeart, i * 400);
+        for (let i = 0; i < 1; i++) setTimeout(createHeart, i * 400);
       }
     });
   
@@ -1716,6 +1851,8 @@
     if(ly){
       ly.addEventListener('pointerdown',(e)=>{
         e.stopPropagation();
+        ly.classList.remove('flying');
+        ly.classList.add('stopped');
         lyMessagePointer=e.pointerId;
         ly.classList.add('dragging');
         const r=ly.getBoundingClientRect();
@@ -1755,6 +1892,16 @@
         showCallCard();
       }
     },{passive:true});
+
+    const pinnedCallWrap=document.getElementById('callCardWrap');
+    if(pinnedCallWrap){
+      pinnedCallWrap.addEventListener('pointerdown',(e)=>{
+        if(pinnedCallWrap.classList.contains('pinned')){
+          e.stopPropagation();
+          openPinnedCallCard(e);
+        }
+      },{passive:true});
+    }
 
 </script>
 </body>
