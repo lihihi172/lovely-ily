@@ -1074,6 +1074,46 @@ input, textarea, [contenteditable="true"] {
   animation:none !important;
 }
 
+
+/* ===== CHỈ SỬA GIAO DIỆN CÂU HỎI ===== */
+#loveQuestion.show{
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+  animation:none !important;
+  transition:none !important;
+}
+#loveQuestion.show .love-question-card{
+  background:linear-gradient(135deg,#f58ab5,#e96a9f)!important;
+  border:2px solid rgba(255,255,255,.55)!important;
+  border-radius:24px!important;
+  box-shadow:0 14px 40px rgba(220,70,130,.28)!important;
+  color:#fff!important;
+  padding:22px 24px!important;
+}
+#loveQuestion.show .love-question-text,
+#loveQuestion.show .question-text,
+#loveQuestion.show .love-question-card *{
+  color:#fff!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+#loveQuestion.show .love-question-text,
+#loveQuestion.show .question-text{
+  font-size:clamp(20px,5.2vw,27px)!important;
+  line-height:1.45!important;
+  font-weight:700!important;
+  text-shadow:0 1px 2px rgba(120,30,70,.18);
+}
+
+
+/* FINAL ALIGNMENT FIX */
+#loveQuestion.show{justify-content:center!important;align-items:center!important;text-align:center!important}
+#loveQuestion.show .love-question-card{margin-left:auto!important;margin-right:auto!important;text-align:center!important}
+#loveQuestion.show .love-question-text,#loveQuestion.show .question-text{width:100%!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important}
+.letter-content,.letter-body,.love-letter,.letter-text,#letterContent,.letter p{ text-align:justify!important;text-justify:inter-word!important}
+
 </style>
 
 <script>
@@ -1452,7 +1492,6 @@ input, textarea, [contenteditable="true"] {
       if(!heart || heart===activeHeartHold || heart.dataset.bursting==='1' || gatheredHearts.has(heart)) return false;
       gatheredHearts.add(heart);
       gatherCount++;
-      window.__actualGatherCount = gatherCount;
       heart.classList.add('grouped-heart');
       pinHeartAtCurrentPosition(heart);
       if(activeHeartHold && document.body.contains(activeHeartHold)){
@@ -1466,9 +1505,6 @@ input, textarea, [contenteditable="true"] {
         heart.style.opacity='.62';
       }
       if(gatherCount>=50){
-        window.__actualGatherCount = 50;
-        window.__fiftyTriggered = false;
-        if(typeof window.__showGatherFiftyNow === 'function') window.__showGatherFiftyNow();
         gatherCount=0;
         createGatherFlyHearts();
         showGatherFifty();
@@ -1871,7 +1907,7 @@ input, textarea, [contenteditable="true"] {
       }
       /* loveQuestion: không còn chạm ngoài -> đóng. */
       const fifty=document.getElementById('gatherFiftyOverlay');
-      if(fifty && fifty.classList.contains('show') && !e.target.closest('.gather-fifty-card') && !window.__fiftyOpenedInThisGesture){
+      if(fifty && fifty.classList.contains('show') && !e.target.closest('.gather-fifty-card')){
         fifty._close?.();
       }
       dismissOrPinCall(e);
@@ -2055,114 +2091,228 @@ input, textarea, [contenteditable="true"] {
     }
 
 
+(function(){
+  // Dedicated capture-phase priority for Ly yêu Phúc.
+  document.addEventListener('pointerdown',(e)=>{
+    const ly=e.target.closest?.('#lyMessage');
+    if(!ly || !ly.classList.contains('show') || !ly.classList.contains('flying')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    ly.classList.remove('flying');
+    ly.classList.add('stopped');
+    hideLyMessage();
+    showLoveQuestion();
+  }, {capture:true, passive:false});
+})();;
+
 </script>
 
-<script id="final-clean-interaction-fix">
+<script>
 (function(){
-  'use strict';
-  let questionLocked=false;
-  let questionOpening=false;
-  let fiftyOpenedInThisGesture=false;
+  function triggerLyQuestion(el, ev){
+    if(!el || el.dataset.lyTriggered === "1") return;
+    el.dataset.lyTriggered = "1";
+    if(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    }
+    el.style.animation = "none";
+    el.style.transition = "none";
+    el.style.opacity = "1";
+    el.style.pointerEvents = "none";
+    el.classList.add("stopped");
 
-  function q(){ return document.getElementById('loveQuestion'); }
-  function clearQTimers(){
-    if(window.questionTimer){ clearTimeout(window.questionTimer); window.questionTimer=null; }
+    if(typeof window.showLoveQuestion === "function"){
+      window.showLoveQuestion();
+    }else{
+      var q=document.getElementById("loveQuestion");
+      if(q) q.classList.add("show");
+    }
   }
 
-  function forceQuestion(){
-    const el=q(); if(!el) return;
-    questionLocked=true; questionOpening=true; clearQTimers();
-    el.classList.add('show');
-    el.setAttribute('aria-hidden','false');
-    el.style.display='flex'; el.style.visibility='visible'; el.style.opacity='1';
-    el.style.pointerEvents='auto'; el.style.animation='none'; el.style.transition='none';
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ questionOpening=false; }));
-  }
-
-  function openCallFromQuestion(){
-    if(!questionLocked || questionOpening) return;
-    const el=q(); if(!el || !el.classList.contains('show')) return;
-    questionLocked=false;
-    if(typeof window.showCallCard==='function') window.showCallCard();
-  }
-
-  // Ly yêu Phúc luôn được ưu tiên ở capture phase, trước tim và click legacy.
-  document.addEventListener('pointerdown', function(e){
-    const ly=e.target?.closest?.('#lyMessage,.ly-message');
-    if(!ly || !ly.classList.contains('show') || !ly.classList.contains('flying')) return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation?.();
-    ly.classList.remove('flying'); ly.classList.add('stopped');
-    ly.style.animation='none'; ly.style.opacity='1';
-    if(typeof window.hideLyMessage==='function'){ try{ window.hideLyMessage(); }catch(_){} }
-    forceQuestion();
+  /* Capture phase: Ly yêu Phúc luôn được ưu tiên trước tim. */
+  document.addEventListener("pointerdown", function(ev){
+    var ly=ev.target && ev.target.closest ? ev.target.closest(".ly-message") : null;
+    if(ly) triggerLyQuestion(ly, ev);
   }, true);
 
-  // Khi câu hỏi mở, không có event ngoài nào được phép đóng/reset nó.
-  ['pointerdown','pointerup','touchstart','touchend','mousedown','mouseup','click','touchcancel'].forEach(type=>{
-    document.addEventListener(type,function(e){
-      if(!questionLocked) return;
-      const inside=!!e.target?.closest?.('#loveQuestion .love-question-card');
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation?.();
-      if(inside && type==='click' && !questionOpening) openCallFromQuestion();
+  document.addEventListener("touchstart", function(ev){
+    var t=ev.touches && ev.touches[0];
+    if(!t) return;
+    var el=document.elementFromPoint(t.clientX,t.clientY);
+    var ly=el && el.closest ? el.closest(".ly-message") : null;
+    if(ly) triggerLyQuestion(ly, ev);
+  }, {capture:true, passive:false});
+})();
+</script>
+
+
+<script>
+(function(){
+  let questionJustOpened = false;
+
+  window.__openLoveQuestionFromLy = function(){
+    questionJustOpened = true;
+    if (typeof window.showLoveQuestion === "function") {
+      window.showLoveQuestion();
+    } else {
+      const q = document.getElementById("loveQuestion");
+      if (q) q.classList.add("show");
+    }
+    /* Cho phép click kế tiếp của người dùng xử lý bình thường. */
+    setTimeout(() => { questionJustOpened = false; }, 80);
+  };
+
+  /* Capture phase: ưu tiên Ly yêu Phúc tuyệt đối. */
+  document.addEventListener("pointerdown", function(e){
+    const ly = e.target && e.target.closest
+      ? e.target.closest(".ly-message") : null;
+    if (!ly) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+
+    ly.style.animation = "none";
+    ly.classList.add("stopped");
+    ly.style.opacity = "1";
+    ly.style.pointerEvents = "none";
+
+    if (typeof window.hideLyMessage === "function") {
+      window.hideLyMessage();
+    } else {
+      ly.classList.remove("show","flying","dragging");
+      ly.style.display = "none";
+    }
+
+    window.__openLoveQuestionFromLy();
+  }, true);
+
+  /* Chặn click sinh ra từ chính pointerdown vừa mở câu hỏi. */
+  document.addEventListener("click", function(e){
+    if (questionJustOpened) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      questionJustOpened = false;
+    }
+  }, true);
+})();
+</script>
+
+
+<script>
+(function(){
+  let questionOpen = false;
+  let openingLy = false;
+
+  const getQ = () => document.getElementById('loveQuestion');
+
+  function forceQuestionOpen(){
+    const q = getQ();
+    if(!q) return;
+    questionOpen = true;
+    openingLy = true;
+    q.classList.add('show');
+    q.setAttribute('aria-hidden','false');
+    q.style.display='flex';
+    q.style.visibility='visible';
+    q.style.opacity='1';
+    q.style.pointerEvents='auto';
+    clearTimeout(window.questionTimer);
+    window.questionTimer = null;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>openingLy=false));
+  }
+
+  function openCall(){
+    if(!questionOpen) return;
+    const q = getQ();
+    if(!q || !q.classList.contains('show')) return;
+    questionOpen = false;
+    if(typeof window.showCallCard === 'function'){
+      window.showCallCard();
+    }
+  }
+
+  /* Ly: capture phase, trước mọi handler khác. */
+  document.addEventListener('pointerdown', function(e){
+    const ly = e.target?.closest?.('#lyMessage, .ly-message');
+    if(!ly || !ly.classList.contains('show') || !ly.classList.contains('flying')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation?.();
+    ly.classList.remove('flying');
+    ly.classList.add('stopped');
+    ly.style.opacity='1';
+    ly.style.pointerEvents='none';
+    if(typeof window.hideLyMessage === 'function') window.hideLyMessage();
+    forceQuestionOpen();
+  }, true);
+
+  /* Khi QUESTION_OPEN: chỉ card câu hỏi được phép chuyển bước. */
+  document.addEventListener('pointerdown', function(e){
+    if(!questionOpen) return;
+
+    if(openingLy){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
+      return;
+    }
+
+    const q = getQ();
+    const insideCard = !!(q && e.target?.closest?.('#loveQuestion .love-question-card'));
+    if(insideCard){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
+      openCall();
+      return;
+    }
+
+    /* Chạm bất kỳ nơi nào khác: giữ nguyên câu hỏi. */
+    e.stopPropagation();
+    e.stopImmediatePropagation?.();
+  }, true);
+
+  /* Không để click/pointerup/touchend của thao tác khác làm đóng câu hỏi. */
+  ['click','pointerup','touchend','mouseup'].forEach(type=>{
+    document.addEventListener(type, function(e){
+      if(!questionOpen) return;
+      const q=getQ();
+      const insideCard=!!(q && e.target?.closest?.('#loveQuestion .love-question-card'));
+      if(insideCard){
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation?.();
+        if(type==='click') openCall();
+      }else{
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation?.();
+      }
     }, true);
   });
 
-  // Khóa mọi đường hide cũ.
-  if(typeof window.hideLoveQuestion==='function' && !window.__questionHideGuard){
-    const old=window.hideLoveQuestion;
-    window.hideLoveQuestion=function(){ if(questionLocked){ clearQTimers(); forceQuestion(); return; } return old.apply(this,arguments); };
-    window.__questionHideGuard=true;
+  /* Bảo vệ khỏi mọi legacy hideLoveQuestion khi state đang mở. */
+  const legacyHide = window.hideLoveQuestion;
+  if(typeof legacyHide === 'function'){
+    window.hideLoveQuestion = function(){
+      if(questionOpen) return;
+      return legacyHide.apply(this, arguments);
+    };
   }
 
-  // Bọc show cũ để mọi đường mở câu hỏi đều vào cùng một state.
-  if(typeof window.showLoveQuestion==='function' && !window.__questionShowGuard){
-    const old=window.showLoveQuestion;
-    window.showLoveQuestion=function(){ try{ old.apply(this,arguments); }catch(_){} forceQuestion(); };
-    window.__questionShowGuard=true;
+  /* Nếu code cũ gọi showLoveQuestion, đồng bộ state. */
+  const legacyShow = window.showLoveQuestion;
+  if(typeof legacyShow === 'function'){
+    window.showLoveQuestion = function(){
+      try{ legacyShow.apply(this, arguments); }catch(_){}
+      forceQuestionOpen();
+    };
   }
-
-  // ---- MỐC 50: kích hoạt ngay khi trái tim thứ 50 được gom ----
-  const oldGather=window.gatherOneHeart;
-  // gatherOneHeart không được export trong bản hiện tại, nên dùng Mutation/DOM counter watchdog.
-  function countNow(){
-    if(typeof window.gatherCount==='number') return window.gatherCount;
-    const el=document.getElementById('gatherCounter');
-    if(el){ const n=parseInt((el.textContent||'').replace(/\D/g,''),10); if(Number.isFinite(n)) return n; }
-    return 0;
-  }
-
-  function show50(){
-    if(window.__fiftyTriggered) return;
-    window.__fiftyTriggered=true;
-    const box=document.getElementById('gatherFiftyOverlay');
-    if(!box) return;
-    fiftyOpenedInThisGesture=true;
-    window.__fiftyOpenedInThisGesture=true;
-    box.classList.add('show'); box.setAttribute('aria-hidden','false');
-    clearTimeout(box._timer);
-    box._timer=setTimeout(()=>{
-      box.classList.remove('show'); box.setAttribute('aria-hidden','true');
-      fiftyOpenedInThisGesture=false;
-      window.__fiftyOpenedInThisGesture=false;
-    },10000);
-    // Không cho chính pointerdown/pointermove đã đạt 50 đóng overlay ngay lập tức.
-    queueMicrotask(()=>{ fiftyOpenedInThisGesture=false; window.__fiftyOpenedInThisGesture=false; });
-  }
-
-  window.__showGatherFiftyNow = show50;
-
-  function check50(){
-    const n=(typeof window.__actualGatherCount==='number') ? window.__actualGatherCount : countNow();
-    if(!window.__fiftyTriggered && n>=50) show50();
-  }
-  ['pointerdown','pointermove','touchstart','touchmove'].forEach(t=>document.addEventListener(t,()=>requestAnimationFrame(check50),true));
-  setInterval(check50,25);
-
-  // Chặn handler legacy đóng overlay 50 trong chính gesture đạt mốc.
-  const originalPointerCloseGuard=function(e){
-    const box=document.getElementById('gatherFiftyOverlay');
-    if(!box || !box.classList.contains('show') || fiftyOpenedInThisGesture) return;
-  };
 })();
 </script>
 
