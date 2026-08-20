@@ -1074,46 +1074,6 @@ input, textarea, [contenteditable="true"] {
   animation:none !important;
 }
 
-
-/* ===== CHỈ SỬA GIAO DIỆN CÂU HỎI ===== */
-#loveQuestion.show{
-  display:flex !important;
-  visibility:visible !important;
-  opacity:1 !important;
-  pointer-events:auto !important;
-  animation:none !important;
-  transition:none !important;
-}
-#loveQuestion.show .love-question-card{
-  background:linear-gradient(135deg,#f58ab5,#e96a9f)!important;
-  border:2px solid rgba(255,255,255,.55)!important;
-  border-radius:24px!important;
-  box-shadow:0 14px 40px rgba(220,70,130,.28)!important;
-  color:#fff!important;
-  padding:22px 24px!important;
-}
-#loveQuestion.show .love-question-text,
-#loveQuestion.show .question-text,
-#loveQuestion.show .love-question-card *{
-  color:#fff!important;
-  opacity:1!important;
-  visibility:visible!important;
-}
-#loveQuestion.show .love-question-text,
-#loveQuestion.show .question-text{
-  font-size:clamp(20px,5.2vw,27px)!important;
-  line-height:1.45!important;
-  font-weight:700!important;
-  text-shadow:0 1px 2px rgba(120,30,70,.18);
-}
-
-
-/* FINAL ALIGNMENT FIX */
-#loveQuestion.show{justify-content:center!important;align-items:center!important;text-align:center!important}
-#loveQuestion.show .love-question-card{margin-left:auto!important;margin-right:auto!important;text-align:center!important}
-#loveQuestion.show .love-question-text,#loveQuestion.show .question-text{width:100%!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important}
-.letter-content,.letter-body,.love-letter,.letter-text,#letterContent,.letter p{ text-align:justify!important;text-justify:inter-word!important}
-
 </style>
 
 <script>
@@ -2058,262 +2018,165 @@ input, textarea, [contenteditable="true"] {
       }
     });
   
-    // "Ly yêu Phúc": chỉ cần chạm một lần khi chữ đang bay là chuyển ngay sang câu hỏi.
-    const ly=document.getElementById('lyMessage');
-    if(ly){
-      ly.addEventListener('pointerdown',(e)=>{
-        if(!ly.classList.contains('show') || !ly.classList.contains('flying')) return;
-        e.stopPropagation();
-        ly.classList.remove('flying');
-        ly.classList.add('stopped');
-        lyMessagePointer=e.pointerId;
-        try{ly.releasePointerCapture?.(e.pointerId)}catch(_){}
-        hideLyMessage();
-        showLoveQuestion();
-      },{passive:true});
+    
+
+    /* ===== FINAL BUGFIX: counter gom tim + mốc 50 + Ly/question ===== */
+    let finalGather50Triggered = false;
+    let finalGatherCounter = null;
+    let finalFiftyTimer = null;
+    let finalQuestionLocked = false;
+    let finalQuestionOpening = false;
+
+    function finalEnsureGatherCounter(){
+      if(finalGatherCounter && document.body.contains(finalGatherCounter)) return finalGatherCounter;
+      finalGatherCounter=document.createElement('div');
+      finalGatherCounter.id='gatherCounterHUD';
+      finalGatherCounter.setAttribute('aria-hidden','true');
+      document.body.appendChild(finalGatherCounter);
+      return finalGatherCounter;
+    }
+    function finalHideGatherCounter(){
+      if(finalGatherCounter) finalGatherCounter.classList.remove('show');
+    }
+    function finalUpdateGatherCounter(){
+      if(!gatherMode || !activeHeartHold || gatheredHearts.size===0){finalHideGatherCounter();return;}
+      const h=activeHeartHold;
+      if(!document.body.contains(h)){finalHideGatherCounter();return;}
+      const c=finalEnsureGatherCounter();
+      c.textContent=String(gatheredHearts.size);
+      const r=h.getBoundingClientRect();
+      c.style.left=(r.left+r.width/2)+'px';
+      c.style.top=Math.max(24,r.top-18)+'px';
+      c.classList.add('show');
     }
 
-    document.addEventListener('pointerdown',(e)=>{
-      const q=document.getElementById('loveQuestion');
-      if(q?.classList.contains('show') && e.target.closest('#loveQuestion .love-question-card')){
-        showCallCard();
+    function finalCloseFifty(){
+      const box=document.getElementById('gatherFiftyOverlay');
+      if(!box)return;
+      box.classList.remove('show');
+      box.setAttribute('aria-hidden','true');
+      if(finalFiftyTimer){clearTimeout(finalFiftyTimer);finalFiftyTimer=null;}
+      finalGather50Triggered=false;
+    }
+    function finalShowFifty(){
+      const box=document.getElementById('gatherFiftyOverlay');
+      if(!box || finalGather50Triggered)return;
+      finalGather50Triggered=true;
+      finalHideGatherCounter();
+      box.classList.add('show');
+      box.setAttribute('aria-hidden','false');
+      if(finalFiftyTimer)clearTimeout(finalFiftyTimer);
+      finalFiftyTimer=setTimeout(finalCloseFifty,50000);
+    }
+
+    /* Thay hàm hiển thị mốc 50: 50 giây, không 10 giây. */
+    showGatherFifty = function(){ finalShowFifty(); };
+
+    /* Khi đủ 50, kích hoạt ngay trong cùng call-stack, không chờ release. */
+    const finalOriginalGatherOneHeart=gatherOneHeart;
+    gatherOneHeart=function(heart){
+      const before=gatheredHearts.size;
+      const result=finalOriginalGatherOneHeart(heart);
+      finalUpdateGatherCounter();
+      if(gatherCount===0 && before>0 && result){
+        /* Hàm gốc đã đạt 50 và reset count về 0. */
+        finalShowFifty();
       }
-    },{passive:true});
-
-    const pinnedCallWrap=document.getElementById('callCardWrap');
-    if(pinnedCallWrap){
-      pinnedCallWrap.addEventListener('pointerdown',(e)=>{
-        if(pinnedCallWrap.classList.contains('pinned')){
-          e.stopPropagation();
-          openPinnedCallCard(e);
-        }
-      },{passive:true});
-    }
-
-
-(function(){
-  // Dedicated capture-phase priority for Ly yêu Phúc.
-  document.addEventListener('pointerdown',(e)=>{
-    const ly=e.target.closest?.('#lyMessage');
-    if(!ly || !ly.classList.contains('show') || !ly.classList.contains('flying')) return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    ly.classList.remove('flying');
-    ly.classList.add('stopped');
-    hideLyMessage();
-    showLoveQuestion();
-  }, {capture:true, passive:false});
-})();;
-
-</script>
-
-<script>
-(function(){
-  function triggerLyQuestion(el, ev){
-    if(!el || el.dataset.lyTriggered === "1") return;
-    el.dataset.lyTriggered = "1";
-    if(ev){
-      ev.preventDefault();
-      ev.stopPropagation();
-      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-    }
-    el.style.animation = "none";
-    el.style.transition = "none";
-    el.style.opacity = "1";
-    el.style.pointerEvents = "none";
-    el.classList.add("stopped");
-
-    if(typeof window.showLoveQuestion === "function"){
-      window.showLoveQuestion();
-    }else{
-      var q=document.getElementById("loveQuestion");
-      if(q) q.classList.add("show");
-    }
-  }
-
-  /* Capture phase: Ly yêu Phúc luôn được ưu tiên trước tim. */
-  document.addEventListener("pointerdown", function(ev){
-    var ly=ev.target && ev.target.closest ? ev.target.closest(".ly-message") : null;
-    if(ly) triggerLyQuestion(ly, ev);
-  }, true);
-
-  document.addEventListener("touchstart", function(ev){
-    var t=ev.touches && ev.touches[0];
-    if(!t) return;
-    var el=document.elementFromPoint(t.clientX,t.clientY);
-    var ly=el && el.closest ? el.closest(".ly-message") : null;
-    if(ly) triggerLyQuestion(ly, ev);
-  }, {capture:true, passive:false});
-})();
-</script>
-
-
-<script>
-(function(){
-  let questionJustOpened = false;
-
-  window.__openLoveQuestionFromLy = function(){
-    questionJustOpened = true;
-    if (typeof window.showLoveQuestion === "function") {
-      window.showLoveQuestion();
-    } else {
-      const q = document.getElementById("loveQuestion");
-      if (q) q.classList.add("show");
-    }
-    /* Cho phép click kế tiếp của người dùng xử lý bình thường. */
-    setTimeout(() => { questionJustOpened = false; }, 80);
-  };
-
-  /* Capture phase: ưu tiên Ly yêu Phúc tuyệt đối. */
-  document.addEventListener("pointerdown", function(e){
-    const ly = e.target && e.target.closest
-      ? e.target.closest(".ly-message") : null;
-    if (!ly) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-
-    ly.style.animation = "none";
-    ly.classList.add("stopped");
-    ly.style.opacity = "1";
-    ly.style.pointerEvents = "none";
-
-    if (typeof window.hideLyMessage === "function") {
-      window.hideLyMessage();
-    } else {
-      ly.classList.remove("show","flying","dragging");
-      ly.style.display = "none";
-    }
-
-    window.__openLoveQuestionFromLy();
-  }, true);
-
-  /* Chặn click sinh ra từ chính pointerdown vừa mở câu hỏi. */
-  document.addEventListener("click", function(e){
-    if (questionJustOpened) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-      questionJustOpened = false;
-    }
-  }, true);
-})();
-</script>
-
-
-<script>
-(function(){
-  let questionOpen = false;
-  let openingLy = false;
-
-  const getQ = () => document.getElementById('loveQuestion');
-
-  function forceQuestionOpen(){
-    const q = getQ();
-    if(!q) return;
-    questionOpen = true;
-    openingLy = true;
-    q.classList.add('show');
-    q.setAttribute('aria-hidden','false');
-    q.style.display='flex';
-    q.style.visibility='visible';
-    q.style.opacity='1';
-    q.style.pointerEvents='auto';
-    clearTimeout(window.questionTimer);
-    window.questionTimer = null;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>openingLy=false));
-  }
-
-  function openCall(){
-    if(!questionOpen) return;
-    const q = getQ();
-    if(!q || !q.classList.contains('show')) return;
-    questionOpen = false;
-    if(typeof window.showCallCard === 'function'){
-      window.showCallCard();
-    }
-  }
-
-  /* Ly: capture phase, trước mọi handler khác. */
-  document.addEventListener('pointerdown', function(e){
-    const ly = e.target?.closest?.('#lyMessage, .ly-message');
-    if(!ly || !ly.classList.contains('show') || !ly.classList.contains('flying')) return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation?.();
-    ly.classList.remove('flying');
-    ly.classList.add('stopped');
-    ly.style.opacity='1';
-    ly.style.pointerEvents='none';
-    if(typeof window.hideLyMessage === 'function') window.hideLyMessage();
-    forceQuestionOpen();
-  }, true);
-
-  /* Khi QUESTION_OPEN: chỉ card câu hỏi được phép chuyển bước. */
-  document.addEventListener('pointerdown', function(e){
-    if(!questionOpen) return;
-
-    if(openingLy){
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation?.();
-      return;
-    }
-
-    const q = getQ();
-    const insideCard = !!(q && e.target?.closest?.('#loveQuestion .love-question-card'));
-    if(insideCard){
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation?.();
-      openCall();
-      return;
-    }
-
-    /* Chạm bất kỳ nơi nào khác: giữ nguyên câu hỏi. */
-    e.stopPropagation();
-    e.stopImmediatePropagation?.();
-  }, true);
-
-  /* Không để click/pointerup/touchend của thao tác khác làm đóng câu hỏi. */
-  ['click','pointerup','touchend','mouseup'].forEach(type=>{
-    document.addEventListener(type, function(e){
-      if(!questionOpen) return;
-      const q=getQ();
-      const insideCard=!!(q && e.target?.closest?.('#loveQuestion .love-question-card'));
-      if(insideCard){
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation?.();
-        if(type==='click') openCall();
-      }else{
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation?.();
-      }
-    }, true);
-  });
-
-  /* Bảo vệ khỏi mọi legacy hideLoveQuestion khi state đang mở. */
-  const legacyHide = window.hideLoveQuestion;
-  if(typeof legacyHide === 'function'){
-    window.hideLoveQuestion = function(){
-      if(questionOpen) return;
-      return legacyHide.apply(this, arguments);
+      return result;
     };
-  }
 
-  /* Nếu code cũ gọi showLoveQuestion, đồng bộ state. */
-  const legacyShow = window.showLoveQuestion;
-  if(typeof legacyShow === 'function'){
-    window.showLoveQuestion = function(){
-      try{ legacyShow.apply(this, arguments); }catch(_){}
-      forceQuestionOpen();
+    /* Counter cập nhật theo số tim thực tế và biến mất đúng lúc thả anchor. */
+    const finalOriginalClearHeartHold=clearHeartHold;
+    clearHeartHold=function(){
+      finalHideGatherCounter();
+      const result=finalOriginalClearHeartHold();
+      finalHideGatherCounter();
+      return result;
     };
-  }
-})();
+
+    const finalOriginalUpdateHeldHeart=updateHeldHeart;
+    updateHeldHeart=function(){
+      finalOriginalUpdateHeldHeart();
+      finalUpdateGatherCounter();
+    };
+
+    /* Sau khi đạt 50, release không được tạo Ly yêu Phúc. */
+    const finalOriginalShowLyMessage=showLyMessage;
+    showLyMessage=function(origin){
+      if(finalGather50Triggered)return;
+      return finalOriginalShowLyMessage(origin);
+    };
+
+    /* Câu hỏi: chỉ chính card mới được chuyển sang Gọi cho em. */
+    function finalClearQuestionTimers(){
+      if(questionTimer){clearTimeout(questionTimer);questionTimer=null;}
+      if(window.loveQuestionTimer){clearTimeout(window.loveQuestionTimer);window.loveQuestionTimer=null;}
+    }
+    function finalForceQuestion(){
+      const box=document.getElementById('loveQuestion');
+      if(!box)return;
+      finalQuestionLocked=true; finalQuestionOpening=true; finalClearQuestionTimers();
+      box.classList.add('show');
+      box.setAttribute('aria-hidden','false');
+      box.style.display='flex';box.style.visibility='visible';box.style.opacity='1';box.style.pointerEvents='auto';box.style.animation='none';box.style.transition='none';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{finalQuestionOpening=false;}));
+    }
+    function finalOpenCall(){
+      if(!finalQuestionLocked || finalQuestionOpening)return;
+      finalQuestionLocked=false;
+      showCallCard();
+    }
+
+    /* Ly: capture phase, ưu tiên tuyệt đối, không cần giữ. */
+    document.addEventListener('pointerdown',function(e){
+      const hit=e.target.closest?.('#lyMessage');
+      if(!hit || !hit.classList.contains('show') || !hit.classList.contains('flying'))return;
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();
+      hit.classList.remove('flying');hit.classList.add('stopped');hit.style.opacity='1';
+      hideLyMessage();
+      finalForceQuestion();
+    },{capture:true,passive:false});
+
+    /* Khi question mở: mọi event ngoài card đều bị chặn và question không tự đóng. */
+    ['pointerdown','pointerup','touchstart','touchend','mousedown','mouseup','click'].forEach(type=>{
+      document.addEventListener(type,function(e){
+        if(!finalQuestionLocked)return;
+        const inside=!!e.target.closest?.('#loveQuestion .love-question-card');
+        e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();
+        if(inside && (type==='pointerdown'||type==='click'))finalOpenCall();
+      },{capture:true,passive:false});
+    });
+
+    /* Bảo vệ khỏi hàm hide cũ. */
+    const finalLegacyHide=hideLoveQuestion;
+    hideLoveQuestion=function(){
+      if(finalQuestionLocked){finalClearQuestionTimers();finalForceQuestion();return;}
+      return finalLegacyHide.apply(this,arguments);
+    };
+    window.showLoveQuestion=function(){finalForceQuestion();};
+
+    /* Hiệu ứng 50: một chạm bất kỳ khi đang hiện sẽ đóng; nếu không chạm thì 50 giây. */
+    document.addEventListener('pointerdown',function(e){
+      const box=document.getElementById('gatherFiftyOverlay');
+      if(!box || !finalGather50Triggered || !box.classList.contains('show'))return;
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();
+      finalCloseFifty();
+    },{capture:true,passive:false});
+
+    /* Counter biến mất ngay khi anchor release/cancel. */
+    document.addEventListener('pointerup',function(e){
+      if(activeHeartHold && e.pointerId===activeHeartHold._holdPointerId)finalHideGatherCounter();
+    },{capture:true,passive:true});
+    document.addEventListener('pointercancel',function(){finalHideGatherCounter();},{capture:true,passive:true});
+    document.addEventListener('pointermove',function(){finalUpdateGatherCounter();},{passive:true});
+
+    /* Không copy/chọn/kéo. */
+    document.addEventListener('contextmenu',e=>e.preventDefault(),true);
+    document.addEventListener('selectstart',e=>e.preventDefault(),true);
+    document.addEventListener('dragstart',e=>e.preventDefault(),true);
+    document.addEventListener('copy',e=>e.preventDefault(),true);
+    document.addEventListener('cut',e=>e.preventDefault(),true);
+
 </script>
 
 </body>
