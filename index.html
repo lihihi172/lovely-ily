@@ -476,7 +476,7 @@
       pointer-events:auto;
       user-select:none;
       cursor:pointer;
-      touch-action:none;
+      touch-action:auto;
       will-change:transform,opacity;
       animation:rise var(--duration) linear forwards;
       filter:drop-shadow(0 7px 10px rgba(185,72,103,.12));
@@ -1186,33 +1186,72 @@
 
       floatLayer.appendChild(heart);
 
+      // Mouse/pen interactions stay on Pointer Events.
+      // Touch is handled separately so the page can still scroll while a
+      // finger holds a heart; no touch handler calls preventDefault().
       heart.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        heart.setPointerCapture?.(e.pointerId);
+        if(e.pointerType === 'touch') return;
         beginHeartHold(heart, e.pointerId);
       });
       heart.addEventListener('pointermove', (e) => {
-        if(activeHeartHold === heart && e.pointerId === heart._holdPointerId){
-          e.preventDefault();
+        if(e.pointerType !== 'touch' &&
+           activeHeartHold === heart &&
+           e.pointerId === heart._holdPointerId){
           moveHeldHeart(e.clientX, e.clientY);
         }
       });
       heart.addEventListener('pointerup', (e) => {
-        e.preventDefault();
-        if(activeHeartHold === heart){
+        if(e.pointerType !== 'touch' && activeHeartHold === heart){
           const wasHeldLong = clearHeartHold();
           if(!wasHeldLong) tapHeart(heart);
         }
       });
-      heart.addEventListener('pointercancel', () => {
-        if(activeHeartHold === heart) clearHeartHold();
+      heart.addEventListener('pointercancel', (e) => {
+        if(e.pointerType !== 'touch' && activeHeartHold === heart) clearHeartHold();
       });
-      heart.addEventListener('lostpointercapture', () => {
-        if(activeHeartHold === heart) clearHeartHold();
-      });
+
+      // Touch path: the held heart follows the finger while the browser
+      // remains free to scroll. A second finger can scroll/tap independently.
+      heart.addEventListener('touchstart', (e) => {
+        if(!e.changedTouches.length) return;
+        const t = e.changedTouches[0];
+        beginHeartHold(heart, t.identifier);
+      }, {passive:true});
 
       heart.addEventListener('animationend', () => heart.remove(), {once:true});
     }
+
+    document.addEventListener('touchmove', (e) => {
+      if(!activeHeartHold) return;
+      for(const t of e.changedTouches){
+        if(t.identifier === activeHeartHold._holdPointerId){
+          moveHeldHeart(t.clientX, t.clientY);
+          break;
+        }
+      }
+    }, {passive:true});
+
+    document.addEventListener('touchend', (e) => {
+      if(!activeHeartHold) return;
+      for(const t of e.changedTouches){
+        if(t.identifier === activeHeartHold._holdPointerId){
+          const heart = activeHeartHold;
+          const wasHeldLong = clearHeartHold();
+          if(!wasHeldLong && heart && document.body.contains(heart)) tapHeart(heart);
+          break;
+        }
+      }
+    }, {passive:true});
+
+    document.addEventListener('touchcancel', (e) => {
+      if(!activeHeartHold) return;
+      for(const t of e.changedTouches){
+        if(t.identifier === activeHeartHold._holdPointerId){
+          clearHeartHold();
+          break;
+        }
+      }
+    }, {passive:true});
 
     function beginHearts() {
       if (heartTimer) return;
@@ -1308,6 +1347,7 @@
     }, {capture:true});
 
     window.addEventListener('pointerup', (e) => {
+      if(e.pointerType === 'touch') return;
       if(activeHeartHold && e.pointerId === activeHeartHold._holdPointerId){
         clearHeartHold();
       }
