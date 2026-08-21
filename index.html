@@ -1488,7 +1488,7 @@ input, textarea, [contenteditable="true"] {
 
     function resumeHoldAfterGather(){
       // Deliberately disabled: after gathering, the held heart must stay paused.
-      // The 15-second hold resumes only through a fresh user hold, never automatically.
+      // The 10-second hold resumes only through a fresh user hold, never automatically.
       return;
     }
 
@@ -1542,9 +1542,17 @@ input, textarea, [contenteditable="true"] {
         heart.style.transform='translate(-50%,-50%) scale(.48)';
         heart.style.opacity='.62';
       }
-      if(gatherCount>=50){
+      if(gatheredHearts.size>=50){
+        finalGather50Triggered=true;
+        // Reaching 50 is terminal for this gather session. Never route through
+        // the <50 release path, even if a later pointer event arrives.
+        const arr=[...gatheredHearts];
+        arr.forEach(h=>{ if(document.body.contains(h)) h.remove(); });
+        gatheredHearts.clear();
         gatherCount=0;
-        createGatherFlyHearts();
+        gatherMode=false;
+        gatherPauseStartedAt=0;
+        updateCounter();
         showGatherFifty();
       }
       return true;
@@ -1705,7 +1713,7 @@ input, textarea, [contenteditable="true"] {
 
     function updateHeldHeart(){
       if(!activeHeartHold || !document.body.contains(activeHeartHold)) return;
-      if(gatherMode || gatherPauseStartedAt) return; // pause growth + 15s clock while gathering
+      if(gatherMode || gatherPauseStartedAt) return; // pause growth + 10s clock while gathering
       const elapsed=Math.max(0,performance.now()-heartHoldStartedAt);
       const nextStage=Math.min(5,Math.floor(elapsed/2000)+1);
       if(nextStage!==heartHoldStage){heartHoldStage=nextStage;heartHaptic()}
@@ -1735,16 +1743,17 @@ input, textarea, [contenteditable="true"] {
       updateHeldHeart();
     }
 
-    function beginHeartHold(heart,pointerId){
-      if(!heart || !document.body.contains(heart))return;
-      if(activeHeartHold && activeHeartHold!==heart){
-        gatherMode=true; pauseHoldForGather();
-        gatherOneHeart(heart);
-        return;
-      }
-      if(activeHeartHold===heart)return;
+    const HOLD_CONFIRM_MS = 350;
+    const pendingHeartHolds = new Map();
+
+    function confirmHeartHold(heart,pointerId){
+      if(!heart || !document.body.contains(heart)) return false;
+      const pending=pendingHeartHolds.get(pointerId);
+      if(pending){ clearTimeout(pending.timer); pendingHeartHolds.delete(pointerId); }
+      if(activeHeartHold) return activeHeartHold===heart;
       activeHeartHold=heart;
       activeHeartHold._holdPointerId=pointerId;
+      activeHeartHold._holdConfirmed=true;
       heartGroup=new Set([heart]);
       heart.classList.add('interactive-hold');
       pinHeartAtCurrentPosition(heart);
@@ -1753,6 +1762,26 @@ input, textarea, [contenteditable="true"] {
       heartSpellShown=false;
       clearTimeout(heartSpellTimer);
       heartHoldTimer=setInterval(updateHeldHeart,100);
+      return true;
+    }
+
+    function beginHeartHold(heart,pointerId){
+      if(!heart || !document.body.contains(heart))return;
+      if(activeHeartHold && activeHeartHold!==heart){
+        if(!activeHeartHold._holdConfirmed) return;
+        gatherMode=true; pauseHoldForGather();
+        gatherOneHeart(heart);
+        return;
+      }
+      if(activeHeartHold===heart)return;
+      if(pendingHeartHolds.has(pointerId)) return;
+      const timer=setTimeout(()=>{
+        pendingHeartHolds.delete(pointerId);
+        if(activePointers.has(pointerId) && !activeHeartHold){
+          confirmHeartHold(heart,pointerId);
+        }
+      },HOLD_CONFIRM_MS);
+      pendingHeartHolds.set(pointerId,{heart,timer});
     }
 
     function collectNearestAt(x,y){
@@ -1869,18 +1898,13 @@ input, textarea, [contenteditable="true"] {
 
       heart.addEventListener('pointerdown',(e)=>{
         activePointers.set(e.pointerId,heart);
-        // CRITICAL MULTI-TOUCH RULE: once an anchor heart is being held,
-        // a second pointer must NEVER replace activeHeartHold. It only
-        // enters gather mode and collects hearts. Replacing the anchor here
-        // caused the second finger's pointerup to release the whole session
-        // and make gathered hearts fly while finger 1 was still down.
         if(activeHeartHold && e.pointerId!==activeHeartHold._holdPointerId){
+          if(!activeHeartHold._holdConfirmed) return;
           gatherMode=true;
           pauseHoldForGather();
           collectNearestAt(e.clientX,e.clientY);
           return;
         }
-        try{heart.setPointerCapture?.(e.pointerId)}catch(_){}
         beginHeartHold(heart,e.pointerId);
       },{passive:true});
 
@@ -1894,15 +1918,29 @@ input, textarea, [contenteditable="true"] {
       },{passive:true});
 
       const endPointer=(e)=>{
+        const pending=pendingHeartHolds.get(e.pointerId);
+        if(pending){
+          clearTimeout(pending.timer);
+          pendingHeartHolds.delete(e.pointerId);
+          activePointers.delete(e.pointerId);
+          // A quick tap is NOT a hold and NOT a gather. Let the existing tap
+          // effect handle it, while the flying animation remains untouched.
+          if(document.body.contains(pending.heart) && !activeHeartHold){
+            tapHeart(pending.heart);
+          }
+          return;
+        }
         activePointers.delete(e.pointerId);
         if(activeHeartHold===heart && e.pointerId===heart._holdPointerId){
+          // If another pointer is still physically tracked, this cannot be
+          // the end of the gather session. Keep the anchor alive.
+          const otherPointers=[...activePointers.keys()].some(pid=>pid!==e.pointerId);
+          if(gatheredHearts.size>0 && otherPointers) return;
           const wasAutoBurst=heart._autoBurst===true;
           const result=clearHeartHold();
-          if(!wasAutoBurst && !result.hadGather && document.body.contains(heart)) tapHeart(heart);
+          if(!wasAutoBurst && result && !result.hadGather && document.body.contains(heart)) tapHeart(heart);
         }else if(gatherMode){
           gatherMode=false;
-          // The held heart remains paused; releasing the gathering finger
-          // never restarts the 15-second timer automatically.
         }
       };
       heart.addEventListener('pointerup',endPointer,{passive:true});
@@ -1956,8 +1994,7 @@ input, textarea, [contenteditable="true"] {
     }
 
     function forgivingTap(x,y){
-      if(activeHeartHold){
-        // A second finger can collect a nearby heart instead of interrupting the hold.
+      if(activeHeartHold && activeHeartHold._holdConfirmed){
         if(collectNearestAt(x,y)) return true;
         return false;
       }
@@ -1967,7 +2004,7 @@ input, textarea, [contenteditable="true"] {
     }
 
     document.addEventListener('pointerdown',(e)=>{
-      if(activeHeartHold && e.pointerId!==activeHeartHold._holdPointerId){
+      if(activeHeartHold && activeHeartHold._holdConfirmed && e.pointerId!==activeHeartHold._holdPointerId){
         activePointers.set(e.pointerId,null);
         if(collectNearestAt(e.clientX,e.clientY)){
           gatherMode=true; pauseHoldForGather();
@@ -2191,20 +2228,20 @@ input, textarea, [contenteditable="true"] {
     }
     showGatherFifty=function(){showFifty();};
 
-    // Keep the legacy gather function, but add a reliable immediate threshold check.
+    // Counter-only wrapper. The gather function itself owns the 50-heart
+    // transition so there is no second legacy path that can reset/fly the group.
     const originalGatherOneHeart=gatherOneHeart;
     gatherOneHeart=function(heart){
-      const before=gatheredHearts.size;
       const result=originalGatherOneHeart(heart);
-      // The legacy function resets the set after reaching 50, so detect that exact transition.
-      if(result && !finalGather50Triggered && before>=49 && gatheredHearts.size===0 && gatherCount===0){
-        showFifty();
-      }else{
-        updateCounter();
-      }
+      updateCounter();
       return result;
     };
 
+
+    document.addEventListener('pointercancel',function(e){
+      const pending=pendingHeartHolds.get(e.pointerId);
+      if(pending){ clearTimeout(pending.timer); pendingHeartHolds.delete(e.pointerId); }
+    },{capture:true,passive:true});
     // Counter stays visible while the grouped-heart set is non-empty.
     const originalUpdateHeldHeart=updateHeldHeart;
     updateHeldHeart=function(){ originalUpdateHeldHeart(); updateCounter(); };
