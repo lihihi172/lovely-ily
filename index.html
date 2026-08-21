@@ -2392,7 +2392,23 @@ input, textarea, [contenteditable="true"] {
   function finalOpenFifty(){
     const box=document.getElementById('gatherFiftyOverlay');
     if(!box) return;
+    // 50 is terminal: stop the single-heart 10s explosion clock immediately.
+    if(heartHoldTimer){ clearInterval(heartHoldTimer); heartHoldTimer=null; }
+    if(heartSpellTimer){ clearTimeout(heartSpellTimer); heartSpellTimer=null; }
+    const spell=document.getElementById('heartSpell');
+    if(spell){ spell.classList.remove('show'); spell.setAttribute('aria-hidden','true'); }
+    if(activeHeartHold) activeHeartHold._autoBurst=true;
+
+    finalGatherComplete=true;
     finalGather50Triggered=true;
+    gatherMode=false;
+    gatherPauseStartedAt=0;
+
+    [...gatheredHearts].forEach(h=>{ if(document.body.contains(h)) h.remove(); });
+    gatheredHearts.clear();
+    gatherCount=0;
+    finalCounter();
+
     box.classList.add('show');
     box.setAttribute('aria-hidden','false');
     if(finalFiftyTimer) clearTimeout(finalFiftyTimer);
@@ -2404,7 +2420,7 @@ input, textarea, [contenteditable="true"] {
         finalGather50Triggered=false;
       }
     },50000);
-  }
+}
 
   function finalStartHold(heart,pointerId){
     if(!heart || !document.body.contains(heart) || finalAnchor) return false;
@@ -2440,21 +2456,24 @@ input, textarea, [contenteditable="true"] {
   }
 
   function finalGatherAt(x,y){
-    if(!finalAnchor || !finalAnchor.confirmed || finalAnchor.released) return false;
+    if(!finalAnchor || !finalAnchor.confirmed || finalAnchor.released || finalGatherComplete || finalGather50Triggered) return false;
     const h=nearestHeartAt(x,y,64);
     if(!h || h===finalAnchor.heart || h.dataset.bursting==='1' || gatheredHearts.has(h)) return false;
     gatherMode=true;
     pauseHoldForGather();
     const before=gatheredHearts.size;
     const ok=gatherOneHeart(h);
-    if(ok && gatheredHearts.size>=50){
-      finalGatherComplete=true;
-      finalCounter();
-    } else if(ok && gatheredHearts.size>before){
-      finalCounter();
+    if(ok){
+      // The legacy gather function clears the set when it reaches 50,
+      // so decide the terminal transition from the pre-add count.
+      if(before + 1 >= 50){
+        finalOpenFifty();
+      }else{
+        finalCounter();
+      }
     }
     return ok;
-  }
+}
 
   function finalReleaseAnchor(){
     if(!finalAnchor || finalAnchor.released) return;
