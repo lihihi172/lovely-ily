@@ -1217,6 +1217,30 @@ input, textarea, [contenteditable="true"] {
 #gatherFiftyOverlay.show .gather-fifty-main{color:#fff!important;font:600 clamp(16px,4.3vw,23px)/1.8 Comfortaa,sans-serif!important;text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;}
 #gatherFiftyOverlay.show .gather-fifty-sub{display:none!important;}
 </style>
+
+<style id="easter-egg-styles">
+.easter-toast-wrap{position:fixed;inset:0;z-index:30000;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .22s ease,visibility .22s ease;padding:20px;box-sizing:border-box}
+.easter-toast-wrap.show{opacity:1;visibility:visible}
+.easter-toast{max-width:min(88vw,560px);padding:15px 20px;border-radius:999px;background:rgba(245,122,160,.94);color:#fff;font:600 clamp(12px,3.2vw,17px)/1.5 Comfortaa,sans-serif;text-align:center;white-space:pre-line;box-shadow:0 12px 35px rgba(177,62,107,.22);border:1px solid rgba(255,255,255,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.easter-secret-overlay{position:fixed;inset:0;z-index:29990;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;visibility:hidden;background:rgba(255,226,238,.12);transition:opacity .25s ease,visibility .25s ease;padding:24px;box-sizing:border-box}
+.easter-secret-overlay.show{opacity:1;visibility:visible}
+.easter-secret-card{max-width:min(90vw,620px);padding:24px 22px;border-radius:26px;background:linear-gradient(135deg,rgba(245,138,181,.96),rgba(233,106,159,.96));color:#fff;text-align:center;box-shadow:0 18px 55px rgba(177,62,107,.28);border:2px solid rgba(255,255,255,.68);font-family:Comfortaa,sans-serif;font-weight:700}
+.easter-secret-main{font-size:clamp(16px,4.3vw,24px);line-height:1.7}
+.easter-secret-sub{margin-top:8px;font-size:clamp(12px,3.3vw,17px);line-height:1.6;font-weight:600}
+.easter-heart-rain{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:29980}
+.easter-rain-heart{position:absolute;top:-12vh;font-size:clamp(24px,7vw,48px);animation:easterRain 2.8s linear forwards;filter:drop-shadow(0 7px 10px rgba(185,72,103,.16))}
+@keyframes easterRain{0%{transform:translate3d(0,0,0) rotate(0deg) scale(.7);opacity:0}12%{opacity:1}100%{transform:translate3d(var(--dx),115vh,0) rotate(var(--rot)) scale(1.05);opacity:0}}
+.easter-flying-heart{position:fixed;left:0;top:50%;z-index:30010;font-size:42px;pointer-events:none;animation:easterFlyHeart 2.2s ease-in-out forwards}
+@keyframes easterFlyHeart{0%{transform:translate(-60px,-50%) scale(.5);opacity:0}12%{opacity:1}50%{transform:translate(45vw,-50%) scale(1.05);opacity:1}100%{transform:translate(110vw,-50%) scale(.75);opacity:0}}
+.easter-fireworks{position:fixed;inset:0;z-index:30020;pointer-events:none;overflow:hidden}
+.easter-firework{position:absolute;width:8px;height:8px;border-radius:50%;left:var(--x);top:var(--y);animation:easterFirework .95s ease-out forwards;animation-delay:var(--delay);filter:drop-shadow(0 0 8px rgba(255,255,255,.7))}
+@keyframes easterFirework{0%{transform:translate(0,0) scale(.4);opacity:0}12%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.8);opacity:0}}
+.easter-clickable{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+.easter-forever{font-weight:700;cursor:pointer;color:inherit;text-decoration:none;transition:text-shadow .2s ease,transform .2s ease;display:inline-block}
+.easter-forever.easter-glow{color:#fff!important;text-shadow:0 0 7px #fff,0 0 16px rgba(245,122,160,.95),0 0 28px rgba(245,122,160,.7);transform:scale(1.04)}
+body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.easter-fireworks):not(.easter-heart-rain){filter:blur(3px);transition:filter .2s ease}
+</style>
+
 </head>
 
 <body class="locked">
@@ -1265,7 +1289,7 @@ input, textarea, [contenteditable="true"] {
 
       <article class="paper reveal">
         <div class="paper-top">
-          <span class="paper-label">một chút thương gửi anh</span>
+          <span class="paper-label easter-clickable" id="secretPaperLabel">một chút thương gửi anh</span>
           <h3 class="letter-title">Gửi anh iu của em ❤️</h3>
         </div>
 
@@ -1278,7 +1302,7 @@ input, textarea, [contenteditable="true"] {
 
           <p>Em thích những ngày bình thường khi ở cạnh anh. Cùng anh đi ăn tối, nghe anh kể những chuyện vụn vặt trong ngày, cùng anh đi đâu đó chẳng cần có kế hoạch. Chỉ mong sau này mình sẽ có thêm thật nhiều ngày như thế.</p>
 
-          <p class="english">Hand in hand. You and me. Today, tomorrow, and forever…</p>
+          <p class="english">Hand in hand. You and me. Today, tomorrow, and <span class="easter-forever">forever</span>…</p>
 
           <p class="love-line">Em yêu anh 💞</p>
 
@@ -1328,7 +1352,7 @@ input, textarea, [contenteditable="true"] {
       </div>
     </section>
 
-    <footer>made with love, just for you ❤️</footer>
+    <footer class="easter-clickable" id="secretFooter">made with love, just for you ❤️</footer>
   </main>
 
 
@@ -1379,6 +1403,16 @@ input, textarea, [contenteditable="true"] {
     <img id="lightboxImage" src="" alt="">
   </div>
 
+  <div class="easter-toast-wrap" id="easterToast" aria-hidden="true"><div class="easter-toast" id="easterToastText"></div></div>
+  <div class="easter-secret-overlay" id="easterSecretOverlay" aria-hidden="true">
+    <div class="easter-secret-card">
+      <div class="easter-secret-main" id="easterSecretMain"></div>
+      <div class="easter-secret-sub" id="easterSecretSub"></div>
+    </div>
+  </div>
+  <div class="easter-heart-rain" id="easterHeartRain" aria-hidden="true"></div>
+  <div class="easter-fireworks" id="easterFireworks" aria-hidden="true"></div>
+
   <script>
     const opening = document.getElementById('opening');
     const envelope = document.getElementById('envelope');
@@ -1414,10 +1448,38 @@ input, textarea, [contenteditable="true"] {
       musicToggle.setAttribute('aria-pressed', 'false');
     }
 
-    musicToggle.addEventListener('click', () => {
-      if (musicOn) stopMusic();
-      else startMusic();
-    });
+    function showEasterToast(text,duration=3000){
+      const wrap=document.getElementById('easterToast'),label=document.getElementById('easterToastText');
+      if(!wrap||!label)return;
+      label.textContent=text;wrap.classList.add('show');wrap.setAttribute('aria-hidden','false');
+      clearTimeout(wrap._timer);wrap._timer=setTimeout(()=>{wrap.classList.remove('show');wrap.setAttribute('aria-hidden','true')},duration);
+    }
+    function launchHeartRain(duration=3000){
+      const layer=document.getElementById('easterHeartRain');if(!layer)return;
+      layer.innerHTML='';const icons=['🩷','💗','💝','💕','💖','💘','❤️'];
+      for(let i=0;i<28;i++){const h=document.createElement('span');h.className='easter-rain-heart';h.textContent=icons[i%icons.length];h.style.left=Math.random()*100+'vw';h.style.animationDelay=Math.random()*.55+'s';h.style.setProperty('--dx',((Math.random()-.5)*160)+'px');h.style.setProperty('--rot',((Math.random()-.5)*360)+'deg');layer.appendChild(h);}
+      setTimeout(()=>layer.innerHTML='',duration+700);
+    }
+    function showPhucEgg(){showEasterToast('Phúc ơi, em nhớ anh 💗',3000);launchHeartRain(3000);}
+    function showLyEgg(){showEasterToast('Tiêu rùiii tiêu rùiiiiii\nLy đã bit iêu rùiiiiii 🥺',3000);const h=document.createElement('span');h.className='easter-flying-heart';h.textContent='💗';document.body.appendChild(h);setTimeout(()=>h.remove(),2400);}
+    function showSecretFooter(){
+      const ov=document.getElementById('easterSecretOverlay'),m=document.getElementById('easterSecretMain'),sub=document.getElementById('easterSecretSub');if(!ov)return;
+      m.textContent='Psst… 🤫 Anh đã tìm thấy điều mà em giấu ở đây rồi.';sub.textContent='';ov.classList.add('show');ov.setAttribute('aria-hidden','false');
+      clearTimeout(ov._t1);clearTimeout(ov._t2);ov._t1=setTimeout(()=>sub.textContent='Thưởng cho anh một nụ hôn 😘',1000);ov._t2=setTimeout(()=>{ov.classList.remove('show');ov.setAttribute('aria-hidden','true')},3000);
+    }
+    function showForeverEgg(el){if(!el)return;el.classList.add('easter-glow');showEasterToast('Từ này là từ em thích nhất ❤️',2200);setTimeout(()=>el.classList.remove('easter-glow'),1200);}
+    function launchFireworks(){
+      const layer=document.getElementById('easterFireworks');if(!layer)return;layer.innerHTML='';const colors=['#ffd6e5','#ffffff','#ff9fc1','#ffc0d7','#f6b7d0'];
+      for(let b=0;b<5;b++){const cx=12+Math.random()*76,cy=18+Math.random()*48;for(let i=0;i<18;i++){const p=document.createElement('span');p.className='easter-firework';const a=Math.PI*2*i/18+Math.random()*.12,d=45+Math.random()*80;p.style.left=cx+'vw';p.style.top=cy+'vh';p.style.setProperty('--x',cx+'vw');p.style.setProperty('--y',cy+'vh');p.style.setProperty('--dx',Math.cos(a)*d+'px');p.style.setProperty('--dy',Math.sin(a)*d+'px');p.style.setProperty('--delay',(b*.16+Math.random()*.08)+'s');p.style.background=colors[(i+b)%colors.length];layer.appendChild(p);}}
+      setTimeout(()=>layer.innerHTML='',2200);
+    }
+    function showPaperEgg(){
+      const ov=document.getElementById('easterSecretOverlay'),m=document.getElementById('easterSecretMain'),sub=document.getElementById('easterSecretSub');if(!ov)return;
+      document.body.classList.add('easter-blur');m.textContent='Em giấu một điều ở đây…';sub.textContent='';ov.classList.add('show');ov.setAttribute('aria-hidden','false');
+      clearTimeout(ov._p1);clearTimeout(ov._p2);ov._p1=setTimeout(()=>{m.textContent='Anh bắn pháo hoa với em hơmm 🎆';launchFireworks()},1000);ov._p2=setTimeout(()=>{ov.classList.remove('show');ov.setAttribute('aria-hidden','true');document.body.classList.remove('easter-blur')},3400);
+    }
+    musicToggle.addEventListener('click',()=>{if(musicOn)showEasterToast('🎵 Bài này em chọn vì nó làm em nhớ anh.',2400);else showEasterToast('🔊 Bật nhạc lên đi, câu chuyện của tụi mình sẽ hay hơn đó…',2400)},true);
+    musicToggle.addEventListener('click',()=>{if(musicOn)stopMusic();else startMusic()});
 
     // Interactive floating-heart system
     let audioCtx = null;
@@ -2612,6 +2674,51 @@ input, textarea, [contenteditable="true"] {
   // If an older closure calls its local showGatherFifty, the patched showFifty
   // above is already authoritative; this guard also provides a global escape hatch.
 })();
+</script>
+<script id="easter-egg-runtime">
+    document.getElementById('secretFooter')?.addEventListener('click',showSecretFooter);
+    document.getElementById('secretPaperLabel')?.addEventListener('click',showPaperEgg);
+    document.querySelector('.easter-forever')?.addEventListener('click',e=>{e.stopPropagation();showForeverEgg(e.currentTarget);});
+
+    function wrapSecretName(name,cls,handler){
+      const root=document.getElementById('main')||document.body;
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){
+        const p=node.parentElement;
+        if(!p||p.closest('script,style,.easter-secret-overlay,.easter-toast-wrap,.easter-heart-rain,.easter-fireworks'))return NodeFilter.FILTER_REJECT;
+        return node.nodeValue.includes(name)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+      }});
+      const nodes=[];let n;while(n=walker.nextNode())nodes.push(n);
+      nodes.forEach(node=>{
+        const parts=node.nodeValue.split(name),frag=document.createDocumentFragment();
+        parts.forEach((part,i)=>{if(part)frag.appendChild(document.createTextNode(part));if(i<parts.length-1){const span=document.createElement('span');span.className=cls+' easter-clickable';span.textContent=name;span.addEventListener('click',handler);frag.appendChild(span)}});
+        node.parentNode.replaceChild(frag,node);
+      });
+    }
+    wrapSecretName('Hồng Phúc','easter-phuc',showPhucEgg);
+    wrapSecretName('Lưu Ly','easter-ly',showLyEgg);
+
+    let secretFiveHeartCount=0,secretFiveHeartReset=null;
+    const secretFiveHearts=new Set();
+    function registerSecretFiveHeart(heart){
+      if(!heart||secretFiveHearts.has(heart))return;
+      secretFiveHearts.add(heart);secretFiveHeartCount=secretFiveHearts.size;
+      clearTimeout(secretFiveHeartReset);secretFiveHeartReset=setTimeout(()=>{secretFiveHeartCount=0;secretFiveHearts.clear()},3000);
+      if(secretFiveHeartCount>=5){
+        secretFiveHeartCount=0;secretFiveHearts.clear();clearTimeout(secretFiveHeartReset);
+        showEasterToast('🎁 Anh đã tìm được món quà bí mật!',2200);
+        setTimeout(()=>showEasterToast('Đêm nay em sẽ thưởng anh 😛',3000),500);
+      }
+    }
+    document.addEventListener('click',e=>{const heart=e.target.closest?.('.float-heart');if(heart)registerSecretFiveHeart(heart)},true);
+
+    let timeEggShown=false;
+    function maybeShowTimeEgg(){
+      if(timeEggShown)return;const h=new Date().getHours();
+      if(h>=0&&h<2){timeEggShown=true;setTimeout(()=>showEasterToast('Khuya rồi mà anh vẫn chưa ngủ à? 🌙',3000),900)}
+      else if(h>=2&&h<4){timeEggShown=true;setTimeout(()=>showEasterToast('Muộn rùiiii… ngủ ngon nha anh, em xót anh lắm í 🥺💗',3500),900)}
+    }
+    envelope.addEventListener('click',()=>setTimeout(maybeShowTimeEgg,800),{once:true});
+
 </script>
 </body>
 </html>
