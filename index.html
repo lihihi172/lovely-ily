@@ -263,6 +263,35 @@
       font-size:16px;
       opacity:.8;
     }
+    .time-egg-slot{
+      min-height:58px;
+      margin:30px auto 0;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      width:min(100%,680px);
+      pointer-events:none;
+    }
+    .time-egg{
+      max-width:min(92vw,620px);
+      padding:10px 16px;
+      border-radius:999px;
+      background:rgba(245,122,160,.94);
+      color:#fff;
+      font:600 clamp(11px,2.9vw,15px)/1.45 Comfortaa,sans-serif;
+      text-align:center;
+      box-shadow:0 10px 28px rgba(177,62,107,.18);
+      border:1px solid rgba(255,255,255,.72);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+      opacity:0;
+      visibility:hidden;
+      transform:translateY(-4px);
+      transition:opacity .22s ease,visibility .22s ease,transform .22s ease;
+      pointer-events:none;
+      user-select:none;
+    }
+    .time-egg.show{opacity:1;visibility:visible;transform:none;pointer-events:auto}
 
     .section{
       width:min(100% - 32px,900px);
@@ -496,6 +525,31 @@
       12%{opacity:var(--opacity)}
       78%{opacity:var(--opacity)}
       100%{transform:translate3d(calc(var(--x) + var(--drift)), -115svh, 0) scale(1.04) rotate(var(--rotate));opacity:0}
+    }
+    /* Easter egg: words launched from “Em yêu anh 💞”, matching the linear rise speed of hearts. */
+    .love-word-fly{
+      position:fixed;
+      left:0;
+      top:0;
+      z-index:100001;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-select:none;
+      white-space:nowrap;
+      padding:6px 10px;
+      border-radius:999px;
+      background:linear-gradient(135deg,rgba(245,138,181,.96),rgba(233,106,159,.96));
+      border:1px solid rgba(255,255,255,.7);
+      color:#fff;
+      font:700 13px/1.15 Comfortaa,sans-serif;
+      box-shadow:0 8px 22px rgba(177,62,107,.2);
+      will-change:transform,opacity;
+      animation:loveWordRise var(--word-duration,10.75s) linear forwards;
+    }
+    @keyframes loveWordRise{
+      0%{transform:translate(-50%,0) scale(.92);opacity:1}
+      78%{opacity:1}
+      100%{transform:translate(-50%,-115svh) scale(1);opacity:0}
     }
     .float-heart.interactive-hold{
       animation-play-state:paused!important;
@@ -1289,6 +1343,9 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
         <h1>Gửi Hồng Phúc <span>❤️</span></h1>
         <p class="hero-note">Có những điều rất bình thường, nhưng chỉ cần có đúng người bên cạnh thì tự nhiên lại trở nên thật đặc biệt.</p>
         <span class="scroll-cue">Kéo xuống đọc nha</span>
+        <div class="time-egg-slot" aria-live="polite" aria-atomic="true">
+          <div class="time-egg" id="timeEgg" aria-hidden="true"></div>
+        </div>
       </div>
     </section>
 
@@ -1315,7 +1372,7 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
 
           <p class="english">Hand in hand. You and me. Today, tomorrow, and <span class="easter-forever">forever</span>…</p>
 
-          <p class="love-line">Em yêu anh 💞</p>
+          <p class="love-line" id="loveLineEaster">Em yêu anh 💞</p>
 
           <div class="signature">Lưu Ly</div>
         </div>
@@ -1489,7 +1546,7 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
       clearTimeout(ov._t1);clearTimeout(ov._t2);
       ov._t1=setTimeout(()=>{
         if(!ov.classList.contains('show') || ov.dataset.stage!=='footer1')return;
-        m.textContent='Em muốn đi đến chân trời cùng anh 😌';sub.textContent='';ov.dataset.stage='footer2';
+        m.textContent='Mình cùng đến chân trời nhé ☺️';sub.textContent='';ov.dataset.stage='footer2';
         ov._t2=setTimeout(()=>{ov.classList.remove('show');ov.setAttribute('aria-hidden','true');ov.dataset.stage='';},3000);
       },3000);
     }
@@ -2745,6 +2802,12 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
 
     let secretFiveHeartCount=0,secretFiveHeartReset=null;
     const secretFiveHearts=new Set();
+    function resetSecretFiveHearts(){
+      secretFiveHeartCount=0;
+      secretFiveHearts.clear();
+      clearTimeout(secretFiveHeartReset);
+      secretFiveHeartReset=null;
+    }
     function hideGiftOverlay(){const box=document.getElementById('easterGiftOverlay');if(!box)return;box.classList.remove('show');box.setAttribute('aria-hidden','true');clearTimeout(box._timer);box._timer=null;}
     function showGiftOverlay(){
       const box=document.getElementById('easterGiftOverlay'),card=document.getElementById('easterGiftCard');if(!box||!card)return;
@@ -2752,18 +2815,52 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
       box._timer=setTimeout(()=>{if(box.dataset.stage==='gift'){card.textContent='Đêm nay em sẽ thưởng anh 😛';box.dataset.stage='chat';box._timer=setTimeout(hideGiftOverlay,3000)}},3000);
     }
     function registerSecretFiveHeart(heart){
-      if(!heart||secretFiveHearts.has(heart))return;
-      secretFiveHearts.add(heart);secretFiveHeartCount=secretFiveHearts.size;
-      clearTimeout(secretFiveHeartReset);secretFiveHeartReset=setTimeout(()=>{secretFiveHeartCount=0;secretFiveHearts.clear()},3000);
-      if(secretFiveHeartCount>=5){secretFiveHeartCount=0;secretFiveHearts.clear();clearTimeout(secretFiveHeartReset);showGiftOverlay();}
+      if(!heart)return;
+      // A repeated heart invalidates the whole 5-heart sequence immediately.
+      if(secretFiveHearts.has(heart)){resetSecretFiveHearts();return;}
+      secretFiveHearts.add(heart);
+      secretFiveHeartCount=secretFiveHearts.size;
+      clearTimeout(secretFiveHeartReset);
+      secretFiveHeartReset=setTimeout(resetSecretFiveHearts,3000);
+      if(secretFiveHeartCount===5){
+        resetSecretFiveHearts();
+        showGiftOverlay();
+      }
     }
     document.addEventListener('click',e=>{const heart=e.target.closest?.('.float-heart');if(heart)registerSecretFiveHeart(heart)},true);
+
+    // “Em yêu anh 💞” launches one hidden word per tap, then loops after the 8th.
+    const loveLineEaster=document.getElementById('loveLineEaster');
+    const loveWordSequence=['tình','iu','của','em','oiiiii','em','muốn','anhhhh'];
+    let loveWordIndex=0;
+    function getHeartFlightDuration(){
+      const heart=document.querySelector('.float-heart');
+      if(!heart)return 10.75;
+      const raw=heart.style.getPropertyValue('--duration')||getComputedStyle(heart).getPropertyValue('--duration');
+      const n=parseFloat(raw);
+      return Number.isFinite(n)&&n>0?n:10.75;
+    }
+    function launchLoveWord(){
+      if(!loveLineEaster)return;
+      const rect=loveLineEaster.getBoundingClientRect();
+      const word=document.createElement('span');
+      word.className='love-word-fly';
+      word.textContent=loveWordSequence[loveWordIndex];
+      word.style.left=(rect.left+rect.width/2)+'px';
+      word.style.top=(rect.top+rect.height/2)+'px';
+      word.style.setProperty('--word-duration',getHeartFlightDuration()+'s');
+      document.body.appendChild(word);
+      loveWordIndex=(loveWordIndex+1)%loveWordSequence.length;
+      word.addEventListener('animationend',()=>word.remove(),{once:true});
+    }
+    loveLineEaster?.addEventListener('pointerdown',e=>{e.stopPropagation();launchLoveWord();},{capture:true,passive:true});
+    loveLineEaster?.addEventListener('click',e=>{e.stopPropagation();},{capture:true,passive:true});
 
     const secretOverlayCard=document.querySelector('#easterSecretOverlay .easter-secret-card');
     secretOverlayCard?.addEventListener('pointerdown',e=>{
       e.preventDefault();e.stopPropagation();
       const ov=document.getElementById('easterSecretOverlay'),m=document.getElementById('easterSecretMain'),sub=document.getElementById('easterSecretSub');if(!ov)return;
-      if(ov.dataset.stage==='footer1'){clearTimeout(ov._t1);m.textContent='Em muốn đi đến chân trời cùng anh 😌';sub.textContent='';ov.dataset.stage='footer2';clearTimeout(ov._t2);ov._t2=setTimeout(()=>{ov.classList.remove('show');ov.setAttribute('aria-hidden','true');ov.dataset.stage='';},3000);}
+      if(ov.dataset.stage==='footer1'){clearTimeout(ov._t1);m.textContent='Mình cùng đến chân trời nhé ☺️';sub.textContent='';ov.dataset.stage='footer2';clearTimeout(ov._t2);ov._t2=setTimeout(()=>{ov.classList.remove('show');ov.setAttribute('aria-hidden','true');ov.dataset.stage='';},3000);}
       else if(ov.dataset.stage==='footer2'){ov.classList.remove('show');ov.setAttribute('aria-hidden','true');ov.dataset.stage='';clearTimeout(ov._t2);}
       else if(ov.dataset.stage==='paper1'){clearTimeout(ov._p1);m.textContent='Anh bắn pháo hoa với em hơmm 🎆';sub.textContent='';ov.dataset.stage='paper2';launchFireworks();clearTimeout(ov._p2);ov._p2=setTimeout(()=>{stopFireworks();ov.classList.remove('show');ov.setAttribute('aria-hidden','true');ov.dataset.stage='';document.body.classList.remove('easter-blur')},5000);}
       else if(ov.dataset.stage==='paper2'){stopFireworks();ov.classList.remove('show');ov.setAttribute('aria-hidden','true');ov.dataset.stage='';document.body.classList.remove('easter-blur');}
@@ -2779,11 +2876,60 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
     let timeEggShown=false;
     function maybeShowTimeEgg(){
       if(timeEggShown)return;
-      const now=new Date(),h=now.getHours(),m=now.getMinutes(),minutes=h*60+m;
-      if(minutes>=23*60+30 || minutes<2*60){timeEggShown=true;setTimeout(()=>showEasterToast('Điều gì khiến anh thức đến giờ này dzạ? 🌙',3000),900)}
-      else if(minutes>=2*60 && minutes<4*60){timeEggShown=true;setTimeout(()=>showEasterToast('Muộn rùiiii… ngủ ngon nha anh, em xót anh lắm í 🥺💗',3500),900)}
-    }
+      const now=new Date();
+      const h=now.getHours(),m=now.getMinutes(),minutes=h*60+m;
+      const egg=document.getElementById('timeEgg');
+      if(!egg)return;
 
+      let text='';
+      // December 15 has priority over every hourly message.
+      if(now.getMonth()===11 && now.getDate()===15){
+        text='CHÚC MỪNG SINH NHẬT CHỒNG YÊU 🎂';
+      }else if(minutes>=7*60 && minutes<9*60){
+        text='Buổi sáng vui vẻ nha thiên thần của em ☀️';
+      }else if(minutes>=11*60 && minutes<13*60){
+        text='Tình iuu của em ăn trưa ngonn miệng ạ 🍽️';
+      }else if(minutes>=14*60 && minutes<15*60){
+        text='Nhắn tin ngay cho em để nhận 1 cốc nước ngon tuyệttttt 🧋';
+      }else if(minutes>=17*60 && minutes<18*60+30){
+        text='Anh tan làm chưaa? Nay anh có mệt không ạ? 🥺 Tối nay anh có muốn gặp em không?';
+      }else if(minutes>=19*60 && minutes<20*60+30){
+        text='Anh ăn tối với gì dzợ? Cho em xinnnn miếnggggg ikkk 😋';
+      }else if(minutes>=22*60+30 && minutes<23*60+30){
+        text='Em muốn cưỡi ngựa cơ 🐎';
+      }else if(minutes>=23*60+30 || minutes<1*60){
+        text='Điều gì khiến chồng iuu thức đến giờ này dzạ? 🌙';
+      }else if(minutes>=1*60 && minutes<3*60){
+        text='Muộn rùiiii… ngủ ngon nha anh, em xót anh lắm í 🥺💗';
+      }else if(minutes>=3*60+30 && minutes<5*60){
+        text='Anh dậy sớm thí 🌥️ hôm nay chắc chắn là ngày may mắn của anh';
+      }else if(minutes>=5*60 && minutes<7*60){
+        text='Chộ ôi 😘 hôm qua tình iuu của em ngủ có ngonnn khôm ạ';
+      }
+      if(!text)return;
+
+      timeEggShown=true;
+      egg.textContent=text;
+      egg.dataset.dismissReady='false';
+      egg.classList.add('show');
+      egg.setAttribute('aria-hidden','false');
+      clearTimeout(egg._dismissTimer);
+      clearTimeout(egg._hideTimer);
+      // Easter egg is not dismissible by touch; it remains for the full 7 seconds.
+      egg._dismissTimer=null;
+      egg._hideTimer=setTimeout(()=>hideTimeEgg(),7000);
+    }
+    function hideTimeEgg(){
+      const egg=document.getElementById('timeEgg');
+      if(!egg)return;
+      clearTimeout(egg._dismissTimer);
+      clearTimeout(egg._hideTimer);
+      egg._dismissTimer=null;
+      egg._hideTimer=null;
+      egg.classList.remove('show');
+      egg.setAttribute('aria-hidden','true');
+      egg.dataset.dismissReady='false';
+    }
     function hideEasterToastNow(){
       const wrap=document.getElementById('easterToast');
       if(!wrap)return;
