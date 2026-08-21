@@ -1238,6 +1238,7 @@ input, textarea, [contenteditable="true"] {
 .easter-clickable{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
 .easter-forever{font-weight:700;cursor:pointer;color:inherit;text-decoration:none;transition:text-shadow .2s ease,transform .2s ease;display:inline-block}
 .easter-forever.easter-glow{color:#fff!important;text-shadow:0 0 7px #fff,0 0 16px rgba(245,122,160,.95),0 0 28px rgba(245,122,160,.7);transform:scale(1.04)}
+.ending-secret-heart{margin-top:6px;font-size:clamp(30px,8vw,54px);line-height:1;display:inline-block;cursor:pointer;transition:transform .2s ease,filter .2s ease}.ending-secret-heart:active{transform:scale(.9)}.ending-secret-heart:hover{filter:drop-shadow(0 0 12px rgba(245,122,160,.7))}
 body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.easter-fireworks):not(.easter-heart-rain){filter:blur(3px);transition:filter .2s ease}
 </style>
 
@@ -1346,7 +1347,8 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
 
     <section class="ending">
       <div class="ending-card reveal">
-        <h2>Em yêu anh ❤️</h2>
+        <h2>Em yêu anh</h2>
+        <div class="ending-secret-heart easter-clickable" id="endingSecretHeart" aria-label="Trái tim bí mật">❤️</div>
         <p>Hy vọng những ngày bình thường sau này của mình sẽ có thật nhiều bữa tối, nhiều câu chuyện vụn vặt, nhiều lần nắm tay và thật nhiều khoảnh khắc để cùng nhau nhớ về.</p>
         <div class="from">Lưu Ly gửi Hồng Phúc 💞</div>
       </div>
@@ -2713,10 +2715,21 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
 
     let timeEggShown=false;
     function maybeShowTimeEgg(){
-      if(timeEggShown)return;const h=new Date().getHours();
-      if(h>=0&&h<2){timeEggShown=true;setTimeout(()=>showEasterToast('Khuya rồi mà anh vẫn chưa ngủ à? 🌙',3000),900)}
-      else if(h>=2&&h<4){timeEggShown=true;setTimeout(()=>showEasterToast('Muộn rùiiii… ngủ ngon nha anh, em xót anh lắm í 🥺💗',3500),900)}
+      if(timeEggShown)return;
+      const now=new Date(),h=now.getHours(),m=now.getMinutes(),minutes=h*60+m;
+      if(minutes>=23*60+30 || minutes<2*60){timeEggShown=true;setTimeout(()=>showEasterToast('Điều gì khiến anh thức đến giờ này dzạ? 🌙',3000),900)}
+      else if(minutes>=2*60 && minutes<4*60){timeEggShown=true;setTimeout(()=>showEasterToast('Muộn rùiiii… ngủ ngon nha anh, em xót anh lắm í 🥺💗',3500),900)}
     }
+
+    function showEndingHeartEgg(){
+      const wrap=document.getElementById('easterToast'),label=document.getElementById('easterToastText');
+      if(!wrap||!label)return;
+      label.textContent='🌜 Em muốn cùng anh đi dưới bóng trăng';
+      wrap.classList.add('show');wrap.setAttribute('aria-hidden','false');
+      clearTimeout(wrap._timer);
+      wrap._timer=setTimeout(()=>{wrap.classList.remove('show');wrap.setAttribute('aria-hidden','true')},3000);
+    }
+    document.getElementById('endingSecretHeart')?.addEventListener('click',showEndingHeartEgg);
     envelope.addEventListener('click',()=>setTimeout(maybeShowTimeEgg,800),{once:true});
 
 </script>
