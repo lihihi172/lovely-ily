@@ -1089,6 +1089,54 @@ input, textarea, [contenteditable="true"] {
 </script>
 
 
+<style id="final-gather-fifty-authoritative-style">
+/* AUTHORITATIVE 50-HEART OVERLAY: fixed to viewport so it cannot render below the page. */
+#gatherFiftyOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:10050 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-sizing:border-box !important;
+  padding:20px !important;
+  margin:0 !important;
+  background:rgba(255,241,247,.82) !important;
+  backdrop-filter:blur(8px) !important;
+  -webkit-backdrop-filter:blur(8px) !important;
+  pointer-events:none !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+}
+#gatherFiftyOverlay.show{
+  display:flex !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+#gatherFiftyOverlay.show .gather-fifty-card{
+  width:min(92vw,760px) !important;
+  max-height:82vh !important;
+  overflow:auto !important;
+  box-sizing:border-box !important;
+  text-align:center !important;
+  padding:28px 24px !important;
+  background:linear-gradient(135deg,#f58ab5,#e96a9f) !important;
+  border:2px solid rgba(255,255,255,.68) !important;
+  border-radius:28px !important;
+  color:#fff !important;
+  box-shadow:0 22px 70px rgba(210,70,130,.28) !important;
+}
+#gatherFiftyOverlay.show .gather-fifty-main{
+  color:#fff !important;
+  font:600 clamp(16px,4.3vw,23px)/1.8 Comfortaa,sans-serif !important;
+  text-align:center !important;
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
+}
+#gatherFiftyOverlay.show .gather-fifty-sub{display:none !important;}
+</style>
+
 <style id="final-gather-counter-style">
 #gatherCounterHUD{
   position:fixed !important;
@@ -1558,7 +1606,8 @@ input, textarea, [contenteditable="true"] {
         gatherMode=false;
         gatherPauseStartedAt=0;
         updateCounter();
-        showGatherFifty();
+        // 50 is terminal: show the requested overlay immediately, never the <50 path.
+        showFifty();
       }
       return true;
     }
@@ -2222,9 +2271,10 @@ input, textarea, [contenteditable="true"] {
     }
     function showFifty(){
       const box=document.getElementById('gatherFiftyOverlay');
-      if(!box || finalGather50Triggered) return;
+      if(!box) return;
+      // This function is intentionally idempotent: reaching 50 may be reported
+      // by more than one compatible gather path, but the overlay must always open.
       finalGather50Triggered=true;
-      // The 50 hearts are already removed by the original gather logic.
       updateCounter();
       box.classList.add('show');
       box.setAttribute('aria-hidden','false');
@@ -2408,7 +2458,11 @@ input, textarea, [contenteditable="true"] {
     if(activeHeartHold)activeHeartHold._autoBurst=true;
     [...gatheredHearts].forEach(h=>{if(document.body.contains(h))h.remove()});
     gatheredHearts.clear();gatherCount=0;update();
-    box.classList.add('show');box.setAttribute('aria-hidden','false');
+    box.classList.add('show');
+    box.setAttribute('aria-hidden','false');
+    box.style.visibility='visible';
+    box.style.opacity='1';
+    box.style.pointerEvents='auto';
     if(fiftyTimer)clearTimeout(fiftyTimer);
     fiftyTimer=setTimeout(()=>{
       box.classList.remove('show');box.setAttribute('aria-hidden','true');
@@ -2536,6 +2590,27 @@ input, textarea, [contenteditable="true"] {
   // Block the old release function during an active V6 session.
   const oldClear=window.clearHeartHold;
   if(typeof oldClear==='function')window.clearHeartHold=function(){if(anchor&&!anchor.released)return false;return oldClear.apply(this,arguments)};
+})();
+</script>
+
+<script id="authoritative-50-overlay-final-guard">
+(()=>{
+  const open=()=>{
+    const box=document.getElementById('gatherFiftyOverlay');
+    if(!box)return false;
+    try{ finalGather50Triggered=true; }catch(_){}
+    try{ updateCounter(); }catch(_){}
+    box.classList.add('show');
+    box.setAttribute('aria-hidden','false');
+    box.style.visibility='visible';
+    box.style.opacity='1';
+    box.style.pointerEvents='auto';
+    return true;
+  };
+  window.__openGatherFiftyAuthoritative=open;
+  window.showGatherFifty=open;
+  // If an older closure calls its local showGatherFifty, the patched showFifty
+  // above is already authoritative; this guard also provides a global escape hatch.
 })();
 </script>
 </body>
