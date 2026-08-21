@@ -1491,7 +1491,7 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
         if(!ov.classList.contains('show') || ov.dataset.stage!=='footer1')return;
         m.textContent='Em muốn đi đến chân trời cùng anh 😌';sub.textContent='';ov.dataset.stage='footer2';
         ov._t2=setTimeout(()=>{ov.classList.remove('show');ov.setAttribute('aria-hidden','true');ov.dataset.stage='';},3000);
-      },1500);
+      },3000);
     }
     function showForeverEgg(el){if(!el)return;el.classList.add('easter-glow');showEasterToast('Từ này là từ em thích nhất ❤️',2200);setTimeout(()=>el.classList.remove('easter-glow'),1200);}
     let fireworksActive=false;
