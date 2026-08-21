@@ -2784,6 +2784,16 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
       else if(minutes>=2*60 && minutes<4*60){timeEggShown=true;setTimeout(()=>showEasterToast('Muộn rùiiii… ngủ ngon nha anh, em xót anh lắm í 🥺💗',3500),900)}
     }
 
+    function hideEasterToastNow(){
+      const wrap=document.getElementById('easterToast');
+      if(!wrap)return;
+      clearTimeout(wrap._timer);
+      wrap._timer=null;
+      wrap.classList.remove('show');
+      wrap.setAttribute('aria-hidden','true');
+      const label=document.getElementById('easterToastText');
+      if(label){label.style.fontSize='';label.style.padding='';}
+    }
     function showEndingHeartEgg(){
       const wrap=document.getElementById('easterToast'),label=document.getElementById('easterToastText');
       if(!wrap||!label)return;
@@ -2792,9 +2802,19 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
       label.style.padding='18px 28px';
       wrap.classList.add('show');wrap.setAttribute('aria-hidden','false');
       clearTimeout(wrap._timer);
-      wrap._timer=setTimeout(()=>{wrap.classList.remove('show');wrap.setAttribute('aria-hidden','true')},3000);
+      wrap._timer=setTimeout(hideEasterToastNow,3000);
     }
-    document.getElementById('endingSecretHeart')?.addEventListener('click',showEndingHeartEgg);
+    document.getElementById('endingSecretHeart')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();showEndingHeartEgg();});
+    // Any user tap on the screen closes the ending-heart toast immediately.
+    document.addEventListener('pointerdown',e=>{
+      const wrap=document.getElementById('easterToast');
+      if(!wrap?.classList.contains('show'))return;
+      if(e.target?.closest?.('#endingSecretHeart'))return;
+      // Only the ending-heart toast is dismissible by a second screen tap.
+      if(document.getElementById('easterToastText')?.textContent==='🌜 Em muốn cùng anh đi dưới bóng trăng'){
+        hideEasterToastNow();
+      }
+    },{capture:true,passive:true});
     envelope.addEventListener('click',()=>setTimeout(maybeShowTimeEgg,800),{once:true});
 
 </script>
