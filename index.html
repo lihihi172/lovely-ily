@@ -2368,5 +2368,228 @@ input, textarea, [contenteditable="true"] {
 
   </script>
 
+
+
+<script id="final-definitive-gather-session-fix">
+(() => {
+  /* FINAL interaction controller
+     - A quick tap never becomes a hold/gather session.
+     - Only a confirmed anchor hold can start gathering.
+     - The anchor pointer is the only pointer allowed to release gathered hearts.
+     - pointercancel/lostpointercapture never releases the gather session.
+     - The 50-heart effect is opened directly, without routing through the <50 path.
+  */
+  const HOLD_MS_FINAL = 350;
+  const finalPending = new Map();
+  const finalPointers = new Map();
+  let finalAnchor = null; // { heart, pointerId, confirmed, released }
+  let finalGatherComplete = false;
+
+  function finalCounter(){
+    try{ if(typeof updateCounter === 'function') updateCounter(); }catch(_){ }
+  }
+
+  function finalOpenFifty(){
+    const box=document.getElementById('gatherFiftyOverlay');
+    if(!box) return;
+    finalGather50Triggered=true;
+    box.classList.add('show');
+    box.setAttribute('aria-hidden','false');
+    if(finalFiftyTimer) clearTimeout(finalFiftyTimer);
+    finalFiftyTimer=setTimeout(()=>{
+      if(typeof closeFifty==='function') closeFifty();
+      else {
+        box.classList.remove('show');
+        box.setAttribute('aria-hidden','true');
+        finalGather50Triggered=false;
+      }
+    },50000);
+  }
+
+  function finalStartHold(heart,pointerId){
+    if(!heart || !document.body.contains(heart) || finalAnchor) return false;
+    const pending=finalPending.get(pointerId);
+    if(pending){ clearTimeout(pending.timer); finalPending.delete(pointerId); }
+    finalAnchor={heart,pointerId,confirmed:true,released:false};
+    activeHeartHold=heart;
+    heart._holdPointerId=pointerId;
+    heart._holdConfirmed=true;
+    heartGroup=new Set([heart]);
+    heart.classList.add('interactive-hold');
+    pinHeartAtCurrentPosition(heart);
+    heartHoldStage=0;
+    heartHoldStartedAt=performance.now();
+    heart._autoBurst=false;
+    heartSpellShown=false;
+    if(heartHoldTimer) clearInterval(heartHoldTimer);
+    heartHoldTimer=setInterval(updateHeldHeart,100);
+    return true;
+  }
+
+  function finalBeginPending(heart,pointerId){
+    if(finalAnchor || finalPending.has(pointerId)) return;
+    const timer=setTimeout(()=>{
+      const rec=finalPending.get(pointerId);
+      if(!rec) return;
+      finalPending.delete(pointerId);
+      if(finalPointers.has(pointerId) && !finalAnchor){
+        finalStartHold(heart,pointerId);
+      }
+    },HOLD_MS_FINAL);
+    finalPending.set(pointerId,{heart,timer});
+  }
+
+  function finalGatherAt(x,y){
+    if(!finalAnchor || !finalAnchor.confirmed || finalAnchor.released) return false;
+    const h=nearestHeartAt(x,y,64);
+    if(!h || h===finalAnchor.heart || h.dataset.bursting==='1' || gatheredHearts.has(h)) return false;
+    gatherMode=true;
+    pauseHoldForGather();
+    const before=gatheredHearts.size;
+    const ok=gatherOneHeart(h);
+    if(ok && gatheredHearts.size>=50){
+      finalGatherComplete=true;
+      finalCounter();
+    } else if(ok && gatheredHearts.size>before){
+      finalCounter();
+    }
+    return ok;
+  }
+
+  function finalReleaseAnchor(){
+    if(!finalAnchor || finalAnchor.released) return;
+    finalAnchor.released=true;
+    const heart=finalAnchor.heart;
+    const completed=finalGatherComplete || finalGather50Triggered;
+    const hadGather=gatheredHearts.size>0;
+
+    // A completed 50-heart session is terminal. Never run the <50 flight path.
+    if(!completed && hadGather){
+      const origin=createGatherFlyHearts();
+      if(origin && typeof showLyMessage==='function') showLyMessage(origin);
+    }
+
+    // If 50 was reached, gathered hearts were already removed by gatherOneHeart.
+    // If <50, createGatherFlyHearts already removed the gathered hearts.
+    gatheredHearts.clear();
+    gatherCount=0;
+    gatherMode=false;
+    gatherPauseStartedAt=0;
+    finalCounter();
+
+    if(heartHoldTimer){clearInterval(heartHoldTimer);heartHoldTimer=null;}
+    heartGroup.forEach(h=>{
+      if(document.body.contains(h)){
+        h.classList.remove('interactive-hold','grouped-heart');
+        h.style.transition='';
+        h.style.zIndex='';
+        if(h!==heart || !completed) releaseHeart(h,true);
+      }
+    });
+    heartGroup.clear();
+    activeHeartHold=null;
+    heartHoldStage=0;
+    heartHoldStartedAt=0;
+    finalAnchor=null;
+    finalGatherComplete=false;
+  }
+
+  // Intercept heart pointer events in capture phase so the many legacy handlers
+  // cannot independently start/end a second hold or gather session.
+  document.addEventListener('pointerdown',(e)=>{
+    const heart=e.target?.closest?.('.float-heart');
+    if(!heart) return;
+    e.stopImmediatePropagation();
+    finalPointers.set(e.pointerId,heart);
+
+    if(finalAnchor && finalAnchor.confirmed && e.pointerId!==finalAnchor.pointerId){
+      finalGatherAt(e.clientX,e.clientY);
+      return;
+    }
+    if(!finalAnchor) finalBeginPending(heart,e.pointerId);
+  },{capture:true,passive:true});
+
+  document.addEventListener('pointermove',(e)=>{
+    if(!finalPointers.has(e.pointerId) && !(finalAnchor && e.pointerId!==finalAnchor.pointerId)) return;
+    e.stopImmediatePropagation();
+    if(finalAnchor && finalAnchor.confirmed && e.pointerId===finalAnchor.pointerId){
+      moveHeldHeart(e.clientX,e.clientY);
+      return;
+    }
+    if(finalAnchor && finalAnchor.confirmed && e.pointerId!==finalAnchor.pointerId){
+      finalGatherAt(e.clientX,e.clientY);
+    }
+  },{capture:true,passive:true});
+
+  document.addEventListener('pointerup',(e)=>{
+    const isAnchor=finalAnchor && e.pointerId===finalAnchor.pointerId;
+    const pending=finalPending.get(e.pointerId);
+    const known=finalPointers.has(e.pointerId) || !!pending || isAnchor;
+    if(!known) return;
+    e.stopImmediatePropagation();
+    finalPointers.delete(e.pointerId);
+    if(pending){
+      clearTimeout(pending.timer);
+      finalPending.delete(e.pointerId);
+      if(!finalAnchor && document.body.contains(pending.heart)) tapHeart(pending.heart);
+      return;
+    }
+    if(isAnchor){
+      finalReleaseAnchor();
+      return;
+    }
+    // Releasing the gather finger never releases the anchor or flies the group.
+    if(finalAnchor && gatheredHearts.size>0){
+      gatherMode=false;
+      finalCounter();
+    }
+  },{capture:true,passive:true});
+
+  document.addEventListener('pointercancel',(e)=>{
+    const isAnchor=finalAnchor && e.pointerId===finalAnchor.pointerId;
+    const pending=finalPending.get(e.pointerId);
+    if(!isAnchor && !pending && !finalPointers.has(e.pointerId)) return;
+    e.stopImmediatePropagation();
+    finalPointers.delete(e.pointerId);
+    if(pending){ clearTimeout(pending.timer); finalPending.delete(e.pointerId); return; }
+    // A cancel is NOT a release. Keep the anchor/gather state intact.
+    finalCounter();
+  },{capture:true,passive:true});
+
+  document.addEventListener('lostpointercapture',(e)=>{
+    if(finalAnchor && e.pointerId===finalAnchor.pointerId){
+      e.stopImmediatePropagation();
+      // Never release on lost pointer capture.
+    }
+  },{capture:true,passive:true});
+
+  // Prevent the old global clearHeartHold path from being able to release the
+  // active final session except through finalReleaseAnchor().
+  const oldClear=window.clearHeartHold;
+  if(typeof oldClear==='function'){
+    window.clearHeartHold=function(){
+      if(finalAnchor && !finalAnchor.released) return false;
+      return oldClear.apply(this,arguments);
+    };
+  }
+
+  // Ensure the 50-heart transition cannot be swallowed by the previous wrapper.
+  const oldGather=gatherOneHeart;
+  gatherOneHeart=function(heart){
+    const before=gatheredHearts.size;
+    const ok=oldGather(heart);
+    if(ok && gatheredHearts.size>=50){
+      finalGatherComplete=true;
+      finalGather50Triggered=true;
+      finalCounter();
+      // The original function clears the set before calling showGatherFifty;
+      // force the visible overlay directly so the previous guard cannot block it.
+      finalOpenFifty();
+    }
+    if(gatheredHearts.size!==before) finalCounter();
+    return ok;
+  };
+})();
+</script>
 </body>
 </html>
