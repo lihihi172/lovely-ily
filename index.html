@@ -2819,16 +2819,28 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
     function hideGiftOverlay(){const box=document.getElementById('easterGiftOverlay');if(!box)return;box.classList.remove('show');box.setAttribute('aria-hidden','true');clearTimeout(box._timer);box._timer=null;}
     const GIFT_MAX_SHOWS=3;
     const GIFT_MIN_INTERVAL=10000;
+    // performance.timeOrigin is the page navigation start, so the first
+    // 30 seconds are locked from the moment the website starts opening.
+    const GIFT_FIRST_ALLOWED_AT=Math.floor(performance.timeOrigin)+30000;
     let giftShowCount=0;
     let giftLastShownAt=-Infinity;
+    let giftTriggerLock=false;
     function showGiftOverlay(){
       const box=document.getElementById('easterGiftOverlay'),card=document.getElementById('easterGiftCard');if(!box||!card)return false;
       const now=Date.now();
+      // Absolute gate: no gift before 30 seconds from page navigation.
+      if(now<GIFT_FIRST_ALLOWED_AT)return false;
+      // Lifetime cap: never more than three successful openings.
       if(giftShowCount>=GIFT_MAX_SHOWS)return false;
+      // Cooldown: successful openings must be at least 10 seconds apart.
       if(now-giftLastShownAt<GIFT_MIN_INTERVAL)return false;
+      // Event/touch deduplication: the same synchronous trigger cannot open twice.
+      if(giftTriggerLock)return false;
+      giftTriggerLock=true;
       giftShowCount++;giftLastShownAt=now;
       clearTimeout(box._timer);card.textContent='🎁 Anh đã tìm được món quà bí mật!';box.dataset.stage='gift';box.classList.add('show');box.setAttribute('aria-hidden','false');
       box._timer=setTimeout(()=>{if(box.dataset.stage==='gift'){card.textContent='Đêm nay em sẽ thưởng anh 😛';box.dataset.stage='chat';box._timer=setTimeout(hideGiftOverlay,3000)}},3000);
+      queueMicrotask(()=>{giftTriggerLock=false});
       return true;
     }
     function registerSecretFiveHeart(heart){
@@ -2858,6 +2870,8 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
     }
     // Registration is called only from the actual heart-explosion paths.
     window.registerSecretHeartExplosion=registerSecretFiveHeart;
+    // Expose read-only diagnostics for deterministic testing; no UI behavior depends on these.
+    window.__giftDiagnostics=()=>({count:giftShowCount,lastShownAt:giftLastShownAt,firstAllowedAt:GIFT_FIRST_ALLOWED_AT,max:GIFT_MAX_SHOWS,minInterval:GIFT_MIN_INTERVAL});
 
     // “Em yêu anh 💞” launches one hidden word per tap, then loops after the 8th.
     const loveLineEaster=document.getElementById('loveLineEaster');
