@@ -1552,24 +1552,33 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
     }
     function showForeverEgg(el){if(!el)return;el.classList.add('easter-glow');showEasterToast('Từ này là từ em thích nhất ❤️',2200);setTimeout(()=>el.classList.remove('easter-glow'),1200);}
     let fireworksActive=false;
+    let fireworksInterval=null;
     function stopFireworks(){
       const layer=document.getElementById('easterFireworks');if(!layer)return;
+      if(fireworksInterval){clearInterval(fireworksInterval);fireworksInterval=null;}
+      if(window.__fireworksTimer){clearTimeout(window.__fireworksTimer);window.__fireworksTimer=null;}
       layer.innerHTML='';fireworksActive=false;
       if(window.__paperEggTimer){clearTimeout(window.__paperEggTimer);window.__paperEggTimer=null;}
     }
-    function launchFireworks(){
-      const layer=document.getElementById('easterFireworks');if(!layer)return;
-      layer.innerHTML='';fireworksActive=true;
+    function spawnFireworkBatch(){
+      const layer=document.getElementById('easterFireworks');if(!layer||!fireworksActive)return;
       const colors=['#ffd6e5','#ffffff','#ff9fc1','#ffc0d7','#f6b7d0'];
       for(let b=0;b<15;b++){
         const cx=5+Math.random()*90,cy=8+Math.random()*70;
         for(let i=0;i<18;i++){
           const p=document.createElement('span');p.className='easter-firework';
           const a=Math.PI*2*i/18+Math.random()*.12,d=45+Math.random()*105;
-          p.style.left=cx+'vw';p.style.top=cy+'vh';p.style.setProperty('--x',cx+'vw');p.style.setProperty('--y',cy+'vh');p.style.setProperty('--dx',Math.cos(a)*d+'px');p.style.setProperty('--dy',Math.sin(a)*d+'px');p.style.setProperty('--delay',(b*.07+Math.random()*.06)+'s');p.style.background=colors[(i+b)%colors.length];layer.appendChild(p);
+          p.style.left=cx+'vw';p.style.top=cy+'vh';p.style.setProperty('--x',cx+'vw');p.style.setProperty('--y',cy+'vh');p.style.setProperty('--dx',Math.cos(a)*d+'px');p.style.setProperty('--dy',Math.sin(a)*d+'px');p.style.setProperty('--delay',(Math.random()*.12)+'s');p.style.background=colors[(i+b)%colors.length];layer.appendChild(p);
         }
       }
-      window.__fireworksTimer=setTimeout(stopFireworks,5000);
+      setTimeout(()=>{if(layer&&fireworksActive)layer.querySelectorAll('.easter-firework').forEach(p=>p.remove())},1200);
+    }
+    function launchFireworks(){
+      const layer=document.getElementById('easterFireworks');if(!layer)return;
+      if(fireworksInterval)clearInterval(fireworksInterval);
+      layer.innerHTML='';fireworksActive=true;
+      spawnFireworkBatch();
+      fireworksInterval=setInterval(spawnFireworkBatch,650);
     }
     function showPaperEgg(){
       const ov=document.getElementById('easterSecretOverlay'),m=document.getElementById('easterSecretMain'),sub=document.getElementById('easterSecretSub');if(!ov)return;
@@ -2808,10 +2817,19 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
       secretFiveHeartTypes.clear();
     }
     function hideGiftOverlay(){const box=document.getElementById('easterGiftOverlay');if(!box)return;box.classList.remove('show');box.setAttribute('aria-hidden','true');clearTimeout(box._timer);box._timer=null;}
+    const GIFT_MAX_SHOWS=3;
+    const GIFT_MIN_INTERVAL=10000;
+    let giftShowCount=0;
+    let giftLastShownAt=-Infinity;
     function showGiftOverlay(){
-      const box=document.getElementById('easterGiftOverlay'),card=document.getElementById('easterGiftCard');if(!box||!card)return;
+      const box=document.getElementById('easterGiftOverlay'),card=document.getElementById('easterGiftCard');if(!box||!card)return false;
+      const now=Date.now();
+      if(giftShowCount>=GIFT_MAX_SHOWS)return false;
+      if(now-giftLastShownAt<GIFT_MIN_INTERVAL)return false;
+      giftShowCount++;giftLastShownAt=now;
       clearTimeout(box._timer);card.textContent='🎁 Anh đã tìm được món quà bí mật!';box.dataset.stage='gift';box.classList.add('show');box.setAttribute('aria-hidden','false');
       box._timer=setTimeout(()=>{if(box.dataset.stage==='gift'){card.textContent='Đêm nay em sẽ thưởng anh 😛';box.dataset.stage='chat';box._timer=setTimeout(hideGiftOverlay,3000)}},3000);
+      return true;
     }
     function registerSecretFiveHeart(heart){
       if(!heart) return;
@@ -2907,8 +2925,6 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
         text='Anh tan làm chưaa? Nay anh có mệt không ạ? 🥺 Tối nay anh có muốn gặp em không?';
       }else if(minutes>=19*60 && minutes<20*60+30){
         text='Anh ăn tối với gì dzợ? Cho em xinnnn miếnggggg ikkk 😋';
-      }else if(minutes>=22*60+30 && minutes<23*60+30){
-        text='Em muốn cưỡi ngựa cơ 🐎';
       }else if(minutes>=23*60+30 || minutes<1*60){
         text='Điều gì khiến chồng iuu thức đến giờ này dzạ? 🌙';
       }else if(minutes>=1*60 && minutes<3*60){
@@ -2976,39 +2992,30 @@ body.easter-blur > *:not(.easter-secret-overlay):not(.easter-toast-wrap):not(.ea
     envelope.addEventListener('click',()=>setTimeout(maybeShowTimeEgg,800),{once:true});
 
 </script>
-<script id="hourly-easter-egg-spacing-fix-v20">
+<script id="hourly-easter-egg-spacing-fix-v21">
 (function(){
   function leafText(text){
     const nodes=document.querySelectorAll('*');
-    for(const el of nodes){
-      if(el.children.length===0 && el.textContent.trim()===text) return el;
-    }
+    for(const el of nodes){if(el.children.length===0&&el.textContent.trim()===text)return el;}
     return null;
   }
-  function applyHourlyEggSpacing(){
+  function pinHourlyEgg(){
     const anchor=leafText('Kéo xuống đọc nha');
     const quote=leafText('Có những điều rất bình thường, nhưng chỉ cần có đúng người bên cạnh thì tự nhiên lại trở nên thật đặc biệt.');
     const slot=document.querySelector('.time-egg-slot');
-    const egg=document.getElementById('timeEgg');
-    if(!anchor||!quote||!slot||!egg) return;
-
-    // The requested reference distance is the vertical distance from the
-    // bottom of the quote to the top of the scroll cue.
-    const a=anchor.getBoundingClientRect();
-    const q=quote.getBoundingClientRect();
+    if(!anchor||!quote||!slot)return;
+    const a=anchor.getBoundingClientRect(),q=quote.getBoundingClientRect();
     const referenceGap=Math.max(0,a.top-q.bottom);
     const targetGap=referenceGap*2.5;
-
-    // Keep the slot in normal flow so no other element moves. Only translate
-    // the Easter-egg slot visually by the required delta.
     const slotRect=slot.getBoundingClientRect();
     const currentGap=Math.max(0,slotRect.top-a.bottom);
-    const delta=targetGap-currentGap;
-    slot.style.transform='translateY('+delta+'px)';
+    slot.style.transform='translateY('+(targetGap-currentGap)+'px)';
+    slot.dataset.positionPinned='true';
   }
-  window.addEventListener('load',applyHourlyEggSpacing);
-  window.addEventListener('resize',applyHourlyEggSpacing);
-  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(applyHourlyEggSpacing);
+  window.addEventListener('load',pinHourlyEgg,{once:true});
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){
+    if(document.querySelector('.time-egg-slot')?.dataset.positionPinned!=='true')pinHourlyEgg();
+  });
 })();
 </script>
 </body>
